@@ -1,6 +1,8 @@
 interface AvatarProps {
   name: string;
   color: string;
+  size?: number;
+  className?: string;
 }
 
 function getInitials(name: string) {
@@ -10,11 +12,12 @@ function getInitials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function Avatar({ name, color }: AvatarProps) {
+function Avatar({ name, color, size = 44, className = '' }: AvatarProps) {
   return (
     <div
-      className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
-      style={{ backgroundColor: color }}
+      className={`rounded-full flex items-center justify-center font-semibold text-white shrink-0 ${className}`}
+      style={{ backgroundColor: color, width: size, height: size, fontSize: size * 0.36 }}
+      title={name}
     >
       {getInitials(name)}
     </div>

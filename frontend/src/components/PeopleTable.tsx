@@ -8,11 +8,19 @@ interface PeopleTableProps {
   columnLabel: string;
   addButtonLabel: string;
   people: TeamMember[];
+  showDesignation?: boolean;
 }
 
 // Shared table for any role that's just a list of people + their assigned
-// projects (Employees, Managers). Pages differ only in title/labels/data.
-function PeopleTable({ title, columnLabel, addButtonLabel, people }: PeopleTableProps) {
+// projects (Employees, Managers). Pages differ only in title/labels/data,
+// plus an optional Designation column (used by Employees only, for now).
+function PeopleTable({
+  title,
+  columnLabel,
+  addButtonLabel,
+  people,
+  showDesignation = false,
+}: PeopleTableProps) {
   return (
     <>
       <div className="flex items-center justify-between mb-6 gap-3">
@@ -29,13 +37,22 @@ function PeopleTable({ title, columnLabel, addButtonLabel, people }: PeopleTable
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left border-collapse table-fixed">
+        <table
+          className={`w-full text-left border-collapse table-fixed ${
+            showDesignation ? 'min-w-[860px]' : 'min-w-[720px]'
+          }`}
+        >
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="w-1/4 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <th className="w-1/5 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 {columnLabel}
               </th>
-              <th className="w-1/4 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              {showDesignation && (
+                <th className="w-1/6 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  Designation
+                </th>
+              )}
+              <th className="w-1/5 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 Email
               </th>
               <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
@@ -57,6 +74,11 @@ function PeopleTable({ title, columnLabel, addButtonLabel, people }: PeopleTable
                     <span className="text-sm font-semibold text-gray-900">{person.name}</span>
                   </div>
                 </td>
+                {showDesignation && (
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-600">{person.designation ?? '—'}</span>
+                  </td>
+                )}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <span className="text-gray-400">

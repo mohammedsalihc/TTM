@@ -9,7 +9,9 @@ import {
   InProgressIcon,
   OverdueIcon,
 } from '../components/icons';
-import { Stat, ProjectProgress, ProjectStatus } from '../types';
+import { statusStyles } from '../components/projectStatusStyles';
+import { Stat } from '../types';
+import { projects } from '../data/projects';
 
 const stats: Stat[] = [
   { label: 'Total Employees', value: 18, icon: <UsersIcon size={22} />, accent: 'indigo' as const },
@@ -20,19 +22,6 @@ const stats: Stat[] = [
   { label: 'In Progress', value: 21, icon: <InProgressIcon size={22} />, accent: 'amber' as const },
   { label: 'Overdue', value: 7, icon: <OverdueIcon size={22} />, accent: 'red' as const },
 ];
-
-const projectProgress: ProjectProgress[] = [
-  { name: 'Website Revamp', percent: 72, status: 'On track' },
-  { name: 'Mobile App Launch', percent: 45, status: 'At risk' },
-  { name: 'CRM Migration', percent: 90, status: 'On track' },
-  { name: 'Internal Tools Cleanup', percent: 30, status: 'Overdue' },
-];
-
-const statusStyles: Record<ProjectStatus, { bar: string; badge: string }> = {
-  'On track': { bar: 'bg-indigo-600', badge: 'bg-indigo-50 text-indigo-600' },
-  'At risk': { bar: 'bg-amber-500', badge: 'bg-amber-50 text-amber-600' },
-  Overdue: { bar: 'bg-red-500', badge: 'bg-red-50 text-red-600' },
-};
 
 function Dashboard() {
   return (
@@ -49,8 +38,8 @@ function Dashboard() {
         <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-5">Project Progress</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {projectProgress.map((project) => (
-              <div key={project.name} className="rounded-lg border border-gray-100 p-4">
+            {projects.map((project) => (
+              <div key={project.id} className="rounded-lg border border-gray-100 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-gray-800">{project.name}</span>
                   <span

@@ -50,13 +50,6 @@ export const ProfileIcon = ({ size = 20 }: IconProps) => (
   </svg>
 );
 
-export const SettingsIcon = ({ size = 20 }: IconProps) => (
-  <svg {...baseProps(size)} aria-hidden="true">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" />
-  </svg>
-);
-
 export const MailIcon = ({ size = 15 }: IconProps) => (
   <svg {...baseProps(size)} aria-hidden="true">
     <path d="M22 6l-10 7L2 6" />
@@ -89,5 +82,44 @@ export const OverdueIcon = ({ size = 20 }: IconProps) => (
   <svg {...baseProps(size)} aria-hidden="true">
     <path d="M12 9v4M12 17h.01" />
     <path d="M10.3 3.9L2.4 18a1.5 1.5 0 001.3 2.2h16.6a1.5 1.5 0 001.3-2.2L13.7 3.9a1.5 1.5 0 00-2.6 0z" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "edit-2"
+export const EditIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "tool" (wrench)
+export const ToolsIcon = ({ size = 20 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "log-out"
+export const LogoutIcon = ({ size = 18 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "lock"
+export const LockIcon = ({ size = 18 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V7a4 4 0 018 0v4" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "briefcase" (used to represent a business/company)
+export const BuildingIcon = ({ size = 18 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
   </svg>
 );

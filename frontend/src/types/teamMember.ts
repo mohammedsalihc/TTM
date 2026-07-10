@@ -4,4 +4,5 @@ export interface TeamMember {
   email: string;
   avatarColor: string;
   projects: string[];
+  designation?: string;
 }

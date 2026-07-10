@@ -6,7 +6,7 @@ import {
   ManagersIcon,
   ProjectsIcon,
   ProfileIcon,
-  SettingsIcon,
+  ToolsIcon,
 } from './icons';
 import { NavItem } from '../types';
 
@@ -14,9 +14,9 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { label: 'Employees', icon: <UsersIcon />, path: '/employees' },
   { label: 'Managers', icon: <ManagersIcon />, path: '/managers' },
-  { label: 'Projects', icon: <ProjectsIcon /> },
-  { label: 'Profile', icon: <ProfileIcon /> },
-  { label: 'Settings', icon: <SettingsIcon /> },
+  { label: 'Projects', icon: <ProjectsIcon />, path: '/projects' },
+  { label: 'Profile & Settings', icon: <ProfileIcon />, path: '/profile' },
+  { label: 'Tools', icon: <ToolsIcon />, path: '/settings' },
 ];
 
 interface SidebarProps {
@@ -24,8 +24,9 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-// Items without a `path` have no page yet — they render as inert, non-navigating
-// placeholders until Admin/Manager features land.
+// Every item currently has a path, but the fallback below (a non-navigating
+// button) stays in place for whenever a new item is added before its page
+// exists — matches how each item here got wired up incrementally.
 //
 // Responsive behavior: below `lg`, this renders as an off-canvas drawer
 // (hidden via -translate-x-full, slid in via `isOpen`) with a backdrop;

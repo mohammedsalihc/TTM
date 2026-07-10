@@ -1,3 +1,5 @@
+import { EditIcon } from './icons';
+
 const iconProps = {
   width: 16,
   height: 16,
@@ -9,21 +11,14 @@ const iconProps = {
   strokeLinejoin: 'round' as const,
 };
 
-// Feather Icons (MIT) — "user-plus", "edit-2", "trash-2".
-// Using known-good icon paths instead of hand-drawn ones so the
-// glyphs are guaranteed centered/proportional in the viewBox.
+// Feather Icons (MIT) — "user-plus", "trash-2" ("edit-2" lives in ./icons,
+// shared with Profile.tsx's inline edit affordance).
 const AssignTaskIcon = () => (
   <svg {...iconProps} aria-hidden="true">
     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
     <circle cx="8.5" cy="7" r="4" />
     <line x1="20" y1="8" x2="20" y2="14" />
     <line x1="23" y1="11" x2="17" y2="11" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg {...iconProps} aria-hidden="true">
-    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
   </svg>
 );
 
