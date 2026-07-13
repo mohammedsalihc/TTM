@@ -8,6 +8,7 @@ import { signToken } from '../utils/jwt';
 import { error_message } from '../constants/errorMessages';
 import { UserRole } from '../types';
 import { registerSchema, loginSchema } from '../validators/auth.validators';
+import { firstValidationMessage } from '../utils/validationHandler';
 
 const SALT_ROUNDS = 10;
 
@@ -19,7 +20,13 @@ class AuthController extends ControllerHandler {
     try {
       const parsed = registerSchema.safeParse(req.body);
       if (!parsed.success) {
-        this.error(res, 400, error_message.body_validation_error, z.treeifyError(parsed.error));
+        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
+        this.error(
+          res,
+          400,
+          { message, code: error_message.body_validation_error.code },
+          z.treeifyError(parsed.error),
+        );
         return;
       }
 
@@ -81,7 +88,13 @@ class AuthController extends ControllerHandler {
     try {
       const parsed = loginSchema.safeParse(req.body);
       if (!parsed.success) {
-        this.error(res, 400, error_message.body_validation_error, z.treeifyError(parsed.error));
+        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
+        this.error(
+          res,
+          400,
+          { message, code: error_message.body_validation_error.code },
+          z.treeifyError(parsed.error),
+        );
         return;
       }
 

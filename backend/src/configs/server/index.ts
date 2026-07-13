@@ -1,9 +1,17 @@
 import express, { Application } from "express"
+import cors from "cors"
 import authRoutes from "../../routes/authRoutes"
+import { controllerHandler } from "../../utils/ControllerHandler"
 
 const app: Application = express()
 
+app.use(cors())
 app.use(express.json())
+
+app.get("/", (_req, res) => {
+    controllerHandler.jsonResponse(res, { message: "Welcome to TTM APIs", status: "ok" })
+})
+
 app.use("/api/auth", authRoutes)
 
 const StartServer = () => {
