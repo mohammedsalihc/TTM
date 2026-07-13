@@ -14,6 +14,7 @@ export const createEmployeeSchema = z.object({
   password: z.string({ error: 'Password is required' }).min(6, 'Password must be at least 6 characters'),
   designation: z.string().trim().min(1).optional(),
   photoUrl: z.string().trim().url('Invalid photo URL').optional(),
+  sendEmailInvite: z.boolean().optional().default(false),
 });
 
 // Matches by name or email (see ListService.User) — free text, so only

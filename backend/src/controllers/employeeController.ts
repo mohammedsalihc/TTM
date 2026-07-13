@@ -5,10 +5,13 @@ import { ControllerHandler } from '../utils/ControllerHandler';
 import { CreateService } from '../services/create-service';
 import { DetailService } from '../services/detail-service';
 import { ListService } from '../services/list-service';
+import { MailService } from '../services/mail-service';
 import { error_message } from '../constants/errorMessages';
 import { UserRole } from '../types';
 import { createEmployeeSchema, listEmployeesQuerySchema } from '../validators/employee.validators';
 import { firstValidationMessage } from '../utils/validationHandler';
+import { renderTemplate } from '../utils/renderTemplate';
+import { welcomeEmployeeEmailTemplate } from '../templates/welcomeEmployeeEmail';
 
 const SALT_ROUNDS = 10;
 
@@ -16,6 +19,7 @@ class EmployeeController extends ControllerHandler {
   private create_service = new CreateService();
   private detail_service = new DetailService();
   private list_service = new ListService();
+  private mail_service = new MailService();
 
   create = async (req: Request, res: Response) => {
     try {
@@ -31,7 +35,7 @@ class EmployeeController extends ControllerHandler {
         return;
       }
 
-      const { name, email, password, designation, photoUrl } = parsed.data;
+      const { name, email, password, designation, photoUrl, sendEmailInvite } = parsed.data;
       const businessId = req.businessId!;
 
       const existingAuth = await this.detail_service.Auth({ email });
@@ -57,6 +61,30 @@ class EmployeeController extends ControllerHandler {
         passwordHash,
         role: UserRole.Employee,
       });
+
+      if (sendEmailInvite) {
+        // Best-effort: the employee record is already created either way —
+        // a flaky email provider shouldn't fail the whole create request.
+        try {
+          const business = await this.detail_service.Business({ _id: businessId });
+          const html = renderTemplate(welcomeEmployeeEmailTemplate, {
+            businessName: business?.name ?? 'your team',
+            employeeName: name,
+            designation: designation || 'a team member',
+            email,
+            password,
+            loginUrl: `${process.env.FRONTEND_URL}/login`,
+            currentYear: new Date().getFullYear().toString(),
+          });
+          await this.mail_service.send({
+            to: email,
+            subject: `Welcome to ${business?.name ?? 'TTM'}`,
+            html,
+          });
+        } catch (mailErr) {
+          console.error('Failed to send welcome email invite:', mailErr);
+        }
+      }
 
       this.jsonResponse(res, {
         id: user._id,
