@@ -14,7 +14,7 @@ import {
   CopyIcon,
 } from './icons';
 import { generatePassword } from '../utils/generatePassword';
-import { colorFromString } from '../utils/avatarColor';
+import { randomColor } from '../utils/avatarColor';
 import { createEmployeeRequest } from '../services/employeeService';
 import { uploadImageRequest } from '../services/uploadService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
@@ -34,6 +34,8 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
   const [copied, setCopied] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [previewColor, setPreviewColor] = useState(randomColor);
+  const [sendEmailInvite, setSendEmailInvite] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +50,8 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
       setCopied(false);
       setPhotoFile(null);
       setPhotoPreviewUrl(null);
+      setPreviewColor(randomColor());
+      setSendEmailInvite(false);
       setError('');
       setIsSubmitting(false);
     }
@@ -112,6 +116,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
         password,
         designation: designation.trim() || undefined,
         photoUrl,
+        sendEmailInvite,
       });
       onCreated();
     } catch (err) {
@@ -133,7 +138,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-white shadow-sm"
               />
             ) : name.trim() ? (
-              <Avatar name={name} color={colorFromString(name)} size={80} />
+              <Avatar name={name} color={previewColor} size={80} />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gray-100 ring-2 ring-white shadow-sm flex items-center justify-center text-gray-400">
                 <ProfileIcon size={32} />
@@ -258,6 +263,16 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
             </div>
           </div>
           {copied && <p className="text-xs text-emerald-600 mt-1">Copied to clipboard</p>}
+
+          <label className="flex items-center gap-1.5 mt-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={sendEmailInvite}
+              onChange={(e) => setSendEmailInvite(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-xs text-gray-500">Send email invite</span>
+          </label>
         </div>
 
         {error && (

@@ -9,3 +9,9 @@ export const colorFromString = (value: string): string => {
   }
   return PALETTE[Math.abs(hash) % PALETTE.length];
 };
+
+// For live-typing previews (e.g. a name field being typed into an Add
+// Employee form) — colorFromString would recompute a wildly different
+// color on every keystroke since each partial string hashes differently,
+// which reads as the avatar flickering. Pick once and hold it instead.
+export const randomColor = (): string => PALETTE[Math.floor(Math.random() * PALETTE.length)];

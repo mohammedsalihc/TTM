@@ -16,4 +16,5 @@ export interface CreateEmployeePayload {
   password: string;
   designation?: string;
   photoUrl?: string;
+  sendEmailInvite?: boolean;
 }
