@@ -3,6 +3,7 @@ interface AvatarProps {
   color: string;
   size?: number;
   className?: string;
+  imageUrl?: string;
 }
 
 function getInitials(name: string) {
@@ -12,7 +13,19 @@ function getInitials(name: string) {
   return (first + last).toUpperCase();
 }
 
-function Avatar({ name, color, size = 44, className = '' }: AvatarProps) {
+function Avatar({ name, color, size = 44, className = '', imageUrl }: AvatarProps) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        title={name}
+        className={`rounded-full object-cover shrink-0 ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
   return (
     <div
       className={`rounded-full flex items-center justify-center font-semibold text-white shrink-0 ${className}`}

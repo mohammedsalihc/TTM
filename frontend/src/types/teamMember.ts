@@ -5,4 +5,5 @@ export interface TeamMember {
   avatarColor: string;
   projects: string[];
   designation?: string;
+  photoUrl?: string;
 }

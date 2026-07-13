@@ -123,3 +123,74 @@ export const BuildingIcon = ({ size = 18 }: IconProps) => (
     <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
   </svg>
 );
+
+// Feather Icons (MIT) — "chevron-left"
+export const ChevronLeftIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "chevron-right"
+export const ChevronRightIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "search"
+export const SearchIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "x"
+export const CloseIcon = ({ size = 20 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+// Material Design Icons (Apache-2.0) — "photo_camera", filled — the
+// standard "change profile photo" glyph (Facebook/LinkedIn use the same).
+export const CameraIcon = ({ size = 16 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M9 2L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8a3 3 0 100 6 3 3 0 000-6z" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "refresh-cw" (used for "generate password")
+export const RefreshIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "eye"
+export const EyeIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "eye-off"
+export const EyeOffIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.6 18.6 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "copy"
+export const CopyIcon = ({ size = 14 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <rect x="9" y="9" width="13" height="13" rx="2" />
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+  </svg>
+);
