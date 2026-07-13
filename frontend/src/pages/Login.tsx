@@ -1,15 +1,19 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
+import Spinner from '../components/Spinner';
 import { MailIcon, LockIcon } from '../components/icons';
+import { loginRequest } from '../services/authService';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -18,7 +22,17 @@ function Login() {
     }
 
     setError('');
-    navigate('/dashboard');
+    setIsLoading(true);
+    try {
+      const { token, user } = await loginRequest({ email: email.trim(), password });
+      localStorage.setItem('ttm_token', token);
+      localStorage.setItem('ttm_user', JSON.stringify(user));
+      navigate('/dashboard');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to sign in. Please try again.'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -85,9 +99,11 @@ function Login() {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign in
+              {isLoading && <Spinner size={16} />}
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 

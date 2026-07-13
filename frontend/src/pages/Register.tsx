@@ -1,7 +1,10 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
+import Spinner from '../components/Spinner';
 import { MailIcon, LockIcon, BuildingIcon, ProfileIcon } from '../components/icons';
+import { registerRequest } from '../services/authService';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 function Register() {
   const navigate = useNavigate();
@@ -11,8 +14,9 @@ function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!businessName.trim() || !fullName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
@@ -26,7 +30,22 @@ function Register() {
     }
 
     setError('');
-    navigate('/dashboard');
+    setIsLoading(true);
+    try {
+      const { token, user } = await registerRequest({
+        businessName: businessName.trim(),
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password,
+      });
+      localStorage.setItem('ttm_token', token);
+      localStorage.setItem('ttm_user', JSON.stringify(user));
+      navigate('/dashboard');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to create account. Please try again.'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -159,9 +178,11 @@ function Register() {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Create account
+              {isLoading && <Spinner size={16} />}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
