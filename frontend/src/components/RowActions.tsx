@@ -1,65 +1,53 @@
-import { EditIcon } from './icons';
+// Filled/solid icons, defined locally (not the shared outline EyeIcon/EditIcon
+// from ./icons, which are used elsewhere as thin outlines — e.g. the
+// password show/hide toggle and Profile.tsx's inline edit affordance).
+const ViewIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8a3 3 0 100 6 3 3 0 000-6z" />
+  </svg>
+);
 
-const iconProps = {
-  width: 16,
-  height: 16,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 2,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-};
-
-// Feather Icons (MIT) — "user-plus", "trash-2" ("edit-2" lives in ./icons,
-// shared with Profile.tsx's inline edit affordance).
-const AssignTaskIcon = () => (
-  <svg {...iconProps} aria-hidden="true">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-    <circle cx="8.5" cy="7" r="4" />
-    <line x1="20" y1="8" x2="20" y2="14" />
-    <line x1="23" y1="11" x2="17" y2="11" />
+const EditIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
   </svg>
 );
 
 const DeleteIcon = () => (
-  <svg {...iconProps} aria-hidden="true">
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    <line x1="10" y1="11" x2="10" y2="17" />
-    <line x1="14" y1="11" x2="14" y2="17" />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
   </svg>
 );
 
 interface RowActionsProps {
-  onAssignTask?: () => void;
+  onViewProfile?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
 const actionButtonClass =
-  'w-8 h-8 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-110 active:scale-95';
+  'w-10 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 active:scale-95';
 
-// Buttons are visual-only placeholders for now — wired up once
-// task assignment and user CRUD have somewhere real to submit to.
-function RowActions({ onAssignTask, onEdit, onDelete }: RowActionsProps) {
+// Buttons are visual-only placeholders for now — wired up once a profile
+// page and user CRUD have somewhere real to submit to.
+function RowActions({ onViewProfile, onEdit, onDelete }: RowActionsProps) {
   return (
     <div className="flex items-center gap-2">
       <button
         type="button"
-        onClick={onAssignTask}
-        title="Assign task"
-        aria-label="Assign task"
-        className={`${actionButtonClass} bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:shadow-md hover:shadow-indigo-200`}
+        onClick={onViewProfile}
+        title="View profile"
+        aria-label="View profile"
+        className={`${actionButtonClass} bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white hover:shadow-md hover:shadow-indigo-200`}
       >
-        <AssignTaskIcon />
+        <ViewIcon />
       </button>
       <button
         type="button"
         onClick={onEdit}
         title="Edit"
         aria-label="Edit"
-        className={`${actionButtonClass} bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white hover:shadow-md hover:shadow-amber-200`}
+        className={`${actionButtonClass} bg-amber-50 border border-amber-200 text-amber-600 hover:bg-amber-500 hover:border-amber-500 hover:text-white hover:shadow-md hover:shadow-amber-200`}
       >
         <EditIcon />
       </button>
@@ -68,7 +56,7 @@ function RowActions({ onAssignTask, onEdit, onDelete }: RowActionsProps) {
         onClick={onDelete}
         title="Delete"
         aria-label="Delete"
-        className={`${actionButtonClass} bg-red-50 text-red-600 hover:bg-red-600 hover:text-white hover:shadow-md hover:shadow-red-200`}
+        className={`${actionButtonClass} bg-red-50 border border-red-200 text-red-600 hover:bg-red-600 hover:border-red-600 hover:text-white hover:shadow-md hover:shadow-red-200`}
       >
         <DeleteIcon />
       </button>

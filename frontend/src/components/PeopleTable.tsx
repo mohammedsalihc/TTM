@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Avatar from './Avatar';
 import RowActions from './RowActions';
 import Spinner from './Spinner';
-import { MailIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import ViewProfileModal from './ViewProfileModal';
+import EditProfileModal from './EditProfileModal';
+import { MailIcon, SearchIcon } from './icons';
 import { TeamMember } from '../types';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -16,17 +18,19 @@ interface PeopleTableProps {
   onAddClick?: () => void;
   search: string;
   onSearchChange: (value: string) => void;
-  page: number;
-  totalPages: number;
   total: number;
-  onPageChange: (page: number) => void;
+  hasMore: boolean;
+  onLoadMore: () => void;
   isLoading?: boolean;
+  isLoadingMore?: boolean;
+  onEditPerson?: (id: string, updates: { name: string; designation?: string }) => Promise<void>;
+  onFetchProfile?: (id: string) => Promise<TeamMember>;
 }
 
-// Shared table for any role that's just a paginated, searchable list of
-// people (Employees, Managers). Pages own the actual data fetch (page,
-// search, results) and pass it down — this component is purely
-// presentational plus the debounce on the search input.
+// Shared table for any role that's just a searchable list of people
+// (Employees, Managers). Pages own the actual data fetch (search, results,
+// paging) and pass it down — this component is purely presentational plus
+// the debounce on the search input and the scroll-triggered "load more".
 function PeopleTable({
   title,
   columnLabel,
@@ -36,13 +40,20 @@ function PeopleTable({
   onAddClick,
   search,
   onSearchChange,
-  page,
-  totalPages,
   total,
-  onPageChange,
+  hasMore,
+  onLoadMore,
   isLoading = false,
+  isLoadingMore = false,
+  onEditPerson,
+  onFetchProfile,
 }: PeopleTableProps) {
   const [searchInput, setSearchInput] = useState(search);
+  const [viewingPerson, setViewingPerson] = useState<TeamMember | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<TeamMember | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -52,8 +63,25 @@ function PeopleTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
+  // Fetch the next 10 automatically once the sentinel below the table
+  // scrolls near the viewport — no Prev/Next buttons needed.
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) onLoadMore();
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
+
   return (
-    <>
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6 gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
@@ -101,7 +129,7 @@ function PeopleTable({
               <th className="w-1/5 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 Email
               </th>
-              <th className="px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <th className="w-1/4 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 Projects
               </th>
               <th className="w-32 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
@@ -169,7 +197,16 @@ function PeopleTable({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <RowActions />
+                    <RowActions
+                      onViewProfile={() => {
+                        setViewingPerson(person);
+                        setIsViewModalOpen(true);
+                      }}
+                      onEdit={() => {
+                        setEditingPerson(person);
+                        setIsEditModalOpen(true);
+                      }}
+                    />
                   </td>
                 </tr>
               ))
@@ -178,32 +215,33 @@ function PeopleTable({
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-            className="flex items-center gap-1 text-sm font-medium text-gray-600 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-          >
-            <ChevronLeftIcon size={16} />
-            Prev
-          </button>
-          <span className="text-sm text-gray-500">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-            className="flex items-center gap-1 text-sm font-medium text-gray-600 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-          >
-            Next
-            <ChevronRightIcon size={16} />
-          </button>
+      {hasMore && (
+        <div ref={sentinelRef} className="flex items-center justify-center py-5">
+          {isLoadingMore && (
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Spinner size={16} />
+              Loading more...
+            </div>
+          )}
         </div>
       )}
-    </>
+
+      <ViewProfileModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        person={viewingPerson}
+        onRefresh={onFetchProfile}
+      />
+
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        person={editingPerson}
+        onSave={async (updates) => {
+          if (editingPerson) await onEditPerson?.(editingPerson.id, updates);
+        }}
+      />
+    </div>
   );
 }
 

@@ -7,8 +7,18 @@ export interface ListEmployeesParams {
   search?: string;
 }
 
+export interface UpdateEmployeePayload {
+  name: string;
+  designation?: string;
+}
+
 export const listEmployeesRequest = (params: ListEmployeesParams = {}) =>
   api.get<PaginatedResult<Employee>>('/api/employees', { params }).then((res) => res.data);
 
+export const getEmployeeRequest = (id: string) => api.get<Employee>(`/api/employees/${id}`).then((res) => res.data);
+
 export const createEmployeeRequest = (payload: CreateEmployeePayload) =>
   api.post<Employee>('/api/employees', payload).then((res) => res.data);
+
+export const updateEmployeeRequest = (id: string, payload: UpdateEmployeePayload) =>
+  api.patch<Employee>(`/api/employees/${id}`, payload).then((res) => res.data);
