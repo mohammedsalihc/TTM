@@ -5,6 +5,7 @@ import { IErrorCode } from '../types';
 const error_code = {
   auth: '100',
   body: '101',
+  upload: '102',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -23,5 +24,13 @@ export const error_message: Record<string, IErrorCode> = {
   unauthorized: {
     message: 'Unauthorized',
     code: `${error_code.auth}_401`,
+  },
+  forbidden: {
+    message: 'You do not have permission to perform this action',
+    code: `${error_code.auth}_403`,
+  },
+  image_required: {
+    message: 'Please select an image to upload',
+    code: `${error_code.upload}_400`,
   },
 };

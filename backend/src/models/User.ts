@@ -25,6 +25,14 @@ const userSchema = new Schema({
     enum: Object.values(UserRole),
     required: true,
   },
+  designation: {
+    type: String,
+    trim: true,
+  },
+  photoUrl: {
+    type: String,
+    trim: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

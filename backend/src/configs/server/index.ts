@@ -1,6 +1,8 @@
 import express, { Application } from "express"
 import cors from "cors"
 import authRoutes from "../../routes/authRoutes"
+import employeeRoutes from "../../routes/employeeRoutes"
+import uploadRoutes from "../../routes/uploadRoutes"
 import { controllerHandler } from "../../utils/ControllerHandler"
 
 const app: Application = express()
@@ -13,6 +15,8 @@ app.get("/", (_req, res) => {
 })
 
 app.use("/api/auth", authRoutes)
+app.use("/api/employees", employeeRoutes)
+app.use("/api/upload", uploadRoutes)
 
 const StartServer = () => {
     let port = process.env.PORT || 5000;

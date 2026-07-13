@@ -13,10 +13,12 @@ export interface IUser {
   name: string;
   email: string;
   role: UserRole;
+  designation?: string;
+  photoUrl?: string;
   createdAt?: Date;
 }
 
 // Shape returned to clients on register/login.
-export type PublicUser = Pick<IUser, 'name' | 'email' | 'role' | 'businessId'> & {
+export type PublicUser = Pick<IUser, 'name' | 'email' | 'role' | 'businessId' | 'designation' | 'photoUrl'> & {
   id: string;
 };

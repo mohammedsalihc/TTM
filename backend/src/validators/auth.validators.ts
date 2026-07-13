@@ -1,15 +1,26 @@
 import { z } from 'zod';
 
+// { error: '...' } covers the field being entirely absent from the body;
+// without it, a missing key fails Zod's base string-type check first and
+// never reaches the .min()/.pipe() message below it.
 export const registerSchema = z.object({
-  businessName: z.string().trim().min(1, 'Business name is required'),
-  fullName: z.string().trim().min(1, 'Full name is required'),
-  email: z.string().trim().toLowerCase().pipe(z.email('Invalid email address')),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  businessName: z.string({ error: 'Business name is required' }).trim().min(1, 'Business name is required'),
+  fullName: z.string({ error: 'Full name is required' }).trim().min(1, 'Full name is required'),
+  email: z
+    .string({ error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .pipe(z.email('Invalid email address')),
+  password: z.string({ error: 'Password is required' }).min(6, 'Password must be at least 6 characters'),
 });
 
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email('Invalid email address')),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string({ error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .pipe(z.email('Invalid email address')),
+  password: z.string({ error: 'Password is required' }).min(1, 'Password is required'),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

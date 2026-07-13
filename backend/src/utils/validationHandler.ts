@@ -20,3 +20,8 @@ export const objectSanitizer = <T extends Record<string, unknown>>(obj: T): T =>
 // only burying it in the treeified error details.
 export const firstValidationMessage = (error: z.ZodError, fallback: string): string =>
   error.issues[0]?.message || fallback;
+
+// Escapes regex metacharacters in free-text search input before it's used
+// to build a MongoDB $regex filter, so characters like "(" or "." from a
+// user's search term can't break or hijack the query.
+export const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

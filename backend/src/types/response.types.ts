@@ -9,3 +9,15 @@ export interface IServerError {
   error_message_code: string;
   error?: unknown[];
 }
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
