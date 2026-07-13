@@ -1,6 +1,8 @@
 import { StartServer } from "./server"
+import { connectDB } from "./db"
 
-const connectApp = ()=>{
+const connectApp = () => {
+    connectDB()
     StartServer()
 }
 

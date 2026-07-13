@@ -26,6 +26,3 @@ Thumbs.db
 
 # Testing
 coverage/
-
-# Reference project (not part of this app)
-HisWill-API/
