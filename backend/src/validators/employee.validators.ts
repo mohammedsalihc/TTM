@@ -23,4 +23,12 @@ export const listEmployeesQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().optional(),
 });
 
+// Email/password/role are intentionally not editable here — this is the
+// simple "edit name/designation" form, not a full account-management flow.
+export const updateEmployeeSchema = z.object({
+  name: z.string({ error: 'Name is required' }).trim().min(1, 'Name is required'),
+  designation: z.string().trim().min(1).optional(),
+});
+
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
+export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;

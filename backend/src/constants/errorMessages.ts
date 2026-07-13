@@ -6,6 +6,7 @@ const error_code = {
   auth: '100',
   body: '101',
   upload: '102',
+  employee: '103',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -32,5 +33,9 @@ export const error_message: Record<string, IErrorCode> = {
   image_required: {
     message: 'Please select an image to upload',
     code: `${error_code.upload}_400`,
+  },
+  employee_not_found: {
+    message: 'Employee not found',
+    code: `${error_code.employee}_404`,
   },
 };
