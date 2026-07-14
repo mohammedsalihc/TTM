@@ -4,6 +4,7 @@ import { CreateService } from '../services/createService';
 import { DetailService } from '../services/detailService';
 import { ListService } from '../services/listService';
 import { UpdateService } from '../services/updateService';
+import { DeleteService } from '../services/deleteService';
 import { error_message } from '../constants/errorMessages';
 import { UserRole, IProject } from '../types';
 import { createProjectSchema, updateProjectSchema, listProjectsQuerySchema } from '../validators/project.validators';
@@ -32,6 +33,7 @@ class ProjectController extends ControllerHandler {
   private detail_service = new DetailService();
   private list_service = new ListService();
   private update_service = new UpdateService();
+  private delete_service = new DeleteService();
 
   create = asyncHandler(async (req: Request, res: Response) => {
     const parsed = this.validate(createProjectSchema, req.body, res);
@@ -140,6 +142,25 @@ class ProjectController extends ControllerHandler {
     }
 
     this.jsonResponse(res, toProjectResponse(project));
+  });
+
+  remove = asyncHandler(async (req: Request, res: Response) => {
+    const businessId = req.businessId!;
+    const { id } = req.params;
+
+    const existing = await this.detail_service.Project({ _id: id, businessId });
+    if (!existing) {
+      this.error(res, 404, error_message.project_not_found);
+      return;
+    }
+
+    if (!(await canManageProject(req, existing))) {
+      this.error(res, 403, error_message.forbidden);
+      return;
+    }
+
+    await this.delete_service.Project({ _id: id, businessId });
+    this.jsonResponse(res);
   });
 }
 

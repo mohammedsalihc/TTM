@@ -10,6 +10,7 @@ const error_code = {
   manager: '104',
   profile: '105',
   project: '106',
+  task: '107',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -56,5 +57,17 @@ export const error_message: Record<string, IErrorCode> = {
   invalid_project_owner: {
     message: 'Project owner must be an Admin or Manager in your business',
     code: `${error_code.project}_400`,
+  },
+  task_not_found: {
+    message: 'Task not found',
+    code: `${error_code.task}_404`,
+  },
+  invalid_task_project: {
+    message: 'Project not found',
+    code: `${error_code.task}_400`,
+  },
+  invalid_task_assignee: {
+    message: 'Assignees must be employees in your business',
+    code: `${error_code.task}_400`,
   },
 };

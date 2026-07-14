@@ -1,7 +1,8 @@
 import { QueryFilter } from 'mongoose';
 import { UserModel } from '../models/User';
 import { ProjectModel } from '../models/Project';
-import { IUser, IProject } from '../types';
+import { TaskModel } from '../models/Task';
+import { IUser, IProject, ITask } from '../types';
 import { objectSanitizer, escapeRegex } from '../utils/validationHandler';
 
 interface PageArgs {
@@ -46,6 +47,26 @@ export class ListService {
     const [data, total] = await Promise.all([
       ProjectModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       ProjectModel.countDocuments(query),
+    ]);
+
+    return { data, total };
+  };
+
+  Task = async (
+    filter: QueryFilter<ITask>,
+    { page, limit, search }: PageArgs,
+  ): Promise<{ data: ITask[]; total: number }> => {
+    const query = objectSanitizer(filter);
+    if (search) {
+      const regex = new RegExp(escapeRegex(search), 'i');
+      Object.assign(query, { $or: [{ title: regex }, { description: regex }] });
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      TaskModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      TaskModel.countDocuments(query),
     ]);
 
     return { data, total };

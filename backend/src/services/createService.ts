@@ -3,7 +3,8 @@ import { BusinessModel } from '../models/Business';
 import { UserModel } from '../models/User';
 import { AuthModel } from '../models/Auth';
 import { ProjectModel } from '../models/Project';
-import { IBusiness, IUser, IAuth, IProject } from '../types';
+import { TaskModel } from '../models/Task';
+import { IBusiness, IUser, IAuth, IProject, ITask } from '../types';
 
 // _id/createdAt are server/DB-assigned — never part of a create payload.
 type CreateInput<T> = Omit<T, '_id' | 'createdAt'>;
@@ -28,5 +29,9 @@ export class CreateService {
 
   Project = async (body: CreateInput<IProject>): Promise<IProject> => {
     return ProjectModel.create(body);
+  };
+
+  Task = async (body: CreateInput<ITask>): Promise<ITask> => {
+    return TaskModel.create(body);
   };
 }

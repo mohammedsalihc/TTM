@@ -13,5 +13,6 @@ router.post('/', projectController.create);
 router.get('/', projectController.list);
 router.get('/:id', projectController.detail);
 router.patch('/:id', projectController.update);
+router.delete('/:id', projectController.remove);
 
 export default router;

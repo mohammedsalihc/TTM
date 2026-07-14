@@ -3,7 +3,8 @@ import { BusinessModel } from '../models/Business';
 import { UserModel } from '../models/User';
 import { AuthModel } from '../models/Auth';
 import { ProjectModel } from '../models/Project';
-import { IBusiness, IUser, IAuth, IProject } from '../types';
+import { TaskModel } from '../models/Task';
+import { IBusiness, IUser, IAuth, IProject, ITask } from '../types';
 import { objectSanitizer } from '../utils/validationHandler';
 
 export class DetailService {
@@ -25,5 +26,10 @@ export class DetailService {
   Project = async (filter: QueryFilter<IProject>): Promise<IProject | null> => {
     const query = objectSanitizer(filter);
     return ProjectModel.findOne(query);
+  };
+
+  Task = async (filter: QueryFilter<ITask>): Promise<ITask | null> => {
+    const query = objectSanitizer(filter);
+    return TaskModel.findOne(query);
   };
 }
