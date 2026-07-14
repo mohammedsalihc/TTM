@@ -33,6 +33,14 @@ const userSchema = new Schema({
     type: String,
     trim: true,
   },
+  canManageProjects: {
+    type: Boolean,
+    default: false,
+  },
+  canManageEmployees: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -1,7 +1,9 @@
 // Kept as a plain exported string (not a static .html asset) so it survives
 // `tsc` compilation into dist/ without needing a separate asset-copy step.
-// Tokens are replaced by utils/renderTemplate.ts.
-export const welcomeEmployeeEmailTemplate = `<!doctype html>
+// Tokens are replaced by utils/renderTemplate.ts. Shared by both employee
+// and manager invites — {{designation}} carries whatever role phrase the
+// caller wants ("Frontend Developer", "a Manager", etc.).
+export const welcomeTeamMemberEmailTemplate = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -95,7 +97,7 @@ export const welcomeEmployeeEmailTemplate = `<!doctype html>
 
               <!-- Body copy -->
               <p style="margin:0; font-size:14px; line-height:1.7; color:#374151; text-align:left;">
-                Hi {{employeeName}},
+                Hi {{recipientName}},
               </p>
               <p style="margin:12px 0 0 0; font-size:14px; line-height:1.7; color:#374151; text-align:left;">
                 You've been added as <strong style="color:#111827;">{{designation}}</strong> at

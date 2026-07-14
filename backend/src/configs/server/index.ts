@@ -2,6 +2,8 @@ import express, { Application } from "express"
 import cors from "cors"
 import authRoutes from "../../routes/authRoutes"
 import employeeRoutes from "../../routes/employeeRoutes"
+import managerRoutes from "../../routes/managerRoutes"
+import profileRoutes from "../../routes/profileRoutes"
 import uploadRoutes from "../../routes/uploadRoutes"
 import { controllerHandler } from "../../utils/ControllerHandler"
 
@@ -16,6 +18,8 @@ app.get("/", (_req, res) => {
 
 app.use("/api/auth", authRoutes)
 app.use("/api/employees", employeeRoutes)
+app.use("/api/managers", managerRoutes)
+app.use("/api/profile", profileRoutes)
 app.use("/api/upload", uploadRoutes)
 
 const StartServer = () => {

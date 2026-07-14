@@ -7,6 +7,8 @@ const error_code = {
   body: '101',
   upload: '102',
   employee: '103',
+  manager: '104',
+  profile: '105',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -37,5 +39,13 @@ export const error_message: Record<string, IErrorCode> = {
   employee_not_found: {
     message: 'Employee not found',
     code: `${error_code.employee}_404`,
+  },
+  manager_not_found: {
+    message: 'Manager not found',
+    code: `${error_code.manager}_404`,
+  },
+  profile_not_found: {
+    message: 'Profile not found',
+    code: `${error_code.profile}_404`,
   },
 };
