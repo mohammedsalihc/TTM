@@ -1,7 +1,8 @@
 import { Model, QueryFilter, UpdateQuery } from 'mongoose';
 import { UserModel } from '../models/User';
 import { ProjectModel } from '../models/Project';
-import { IUser, IProject } from '../types';
+import { TaskModel } from '../models/Task';
+import { IUser, IProject, ITask } from '../types';
 
 export class UpdateService {
   // Generic escape hatch for one-off updates that don't need a named method.
@@ -15,5 +16,9 @@ export class UpdateService {
 
   Project = async (filter: QueryFilter<IProject>, body: UpdateQuery<IProject>): Promise<IProject | null> => {
     return ProjectModel.findOneAndUpdate(filter, body, { returnDocument: 'after' });
+  };
+
+  Task = async (filter: QueryFilter<ITask>, body: UpdateQuery<ITask>): Promise<ITask | null> => {
+    return TaskModel.findOneAndUpdate(filter, body, { returnDocument: 'after' });
   };
 }

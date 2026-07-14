@@ -11,6 +11,7 @@ const error_code = {
   profile: '105',
   project: '106',
   task: '107',
+  comment: '108',
 };
 
 export const error_message: Record<string, IErrorCode> = {

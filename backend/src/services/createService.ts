@@ -4,7 +4,8 @@ import { UserModel } from '../models/User';
 import { AuthModel } from '../models/Auth';
 import { ProjectModel } from '../models/Project';
 import { TaskModel } from '../models/Task';
-import { IBusiness, IUser, IAuth, IProject, ITask } from '../types';
+import { CommentModel } from '../models/Comment';
+import { IBusiness, IUser, IAuth, IProject, ITask, IComment } from '../types';
 
 // _id/createdAt are server/DB-assigned — never part of a create payload.
 type CreateInput<T> = Omit<T, '_id' | 'createdAt'>;
@@ -33,5 +34,9 @@ export class CreateService {
 
   Task = async (body: CreateInput<ITask>): Promise<ITask> => {
     return TaskModel.create(body);
+  };
+
+  Comment = async (body: CreateInput<IComment>): Promise<IComment> => {
+    return CommentModel.create(body);
   };
 }

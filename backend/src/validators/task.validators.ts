@@ -27,5 +27,27 @@ export const listTasksQuerySchema = paginationQuerySchema.extend({
   priority: z.enum(TaskPriority, { error: 'Invalid task priority' }).optional(),
 });
 
+// All fields optional — this is a partial update (see the updateProjectSchema
+// bug fix: requiring a field like title here would break status/priority-only
+// PATCHes).
+export const updateTaskSchema = z.object({
+  title: z.string().trim().min(1, 'Task title is required').optional(),
+  description: z.string().trim().optional(),
+  assignedTo: z.array(z.string()).optional(),
+  priority: z.enum(TaskPriority, { error: 'Invalid task priority' }).optional(),
+  status: z.enum(TaskStatus, { error: 'Invalid task status' }).optional(),
+  estimatedHours: z.coerce.number().positive('Estimated hours must be greater than 0').optional(),
+  dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
+  labels: z.array(z.string().trim()).optional(),
+});
+
+// Separate from updateTaskSchema — the status-only endpoint is also open to
+// the task's assigned employees (not just Admin/owning Manager), so it's
+// validated and authorized independently of the full update.
+export const updateTaskStatusSchema = z.object({
+  status: z.enum(TaskStatus, { error: 'Invalid task status' }),
+});
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type ListTasksQuery = z.infer<typeof listTasksQuerySchema>;
+export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
