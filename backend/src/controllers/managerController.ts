@@ -1,20 +1,29 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { ControllerHandler } from '../utils/ControllerHandler';
-import { CreateService } from '../services/create-service';
-import { DetailService } from '../services/detail-service';
-import { ListService } from '../services/list-service';
-import { UpdateService } from '../services/update-service';
-import { MailService } from '../services/mail-service';
+import { CreateService } from '../services/createService';
+import { DetailService } from '../services/detailService';
+import { ListService } from '../services/listService';
+import { UpdateService } from '../services/updateService';
+import { MailService } from '../services/mailService';
 import { error_message } from '../constants/errorMessages';
-import { UserRole } from '../types';
+import { SALT_ROUNDS } from '../constants/security';
+import { UserRole, IUser } from '../types';
 import { createManagerSchema, listManagersQuerySchema, updateManagerSchema } from '../validators/manager.validators';
-import { firstValidationMessage } from '../utils/validationHandler';
-import { renderTemplate } from '../utils/renderTemplate';
-import { welcomeTeamMemberEmailTemplate } from '../templates/welcomeTeamMemberEmail';
+import { isDuplicateKeyError } from '../utils/errors';
+import { buildPaginationMeta } from '../utils/pagination';
+import { asyncHandler } from '../utils/asyncHandler';
 
-const SALT_ROUNDS = 10;
+const toManagerResponse = (user: IUser) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  businessId: user.businessId,
+  photoUrl: user.photoUrl,
+  canManageProjects: user.canManageProjects,
+  canManageEmployees: user.canManageEmployees,
+});
 
 class ManagerController extends ControllerHandler {
   private create_service = new CreateService();
@@ -25,19 +34,10 @@ class ManagerController extends ControllerHandler {
 
   create = async (req: Request, res: Response) => {
     try {
-      const parsed = createManagerSchema.safeParse(req.body);
-      if (!parsed.success) {
-        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsed.error),
-        );
-        return;
-      }
+      const parsed = this.validate(createManagerSchema, req.body, res);
+      if (!parsed) return;
 
-      const { name, email, password, photoUrl, sendEmailInvite } = parsed.data;
+      const { name, email, password, photoUrl, sendEmailInvite } = parsed;
       const businessId = req.businessId!;
 
       const existingAuth = await this.detail_service.Auth({ email });
@@ -68,40 +68,24 @@ class ManagerController extends ControllerHandler {
         // a flaky email provider shouldn't fail the whole create request.
         try {
           const business = await this.detail_service.Business({ _id: businessId });
-          const html = renderTemplate(welcomeTeamMemberEmailTemplate, {
-            businessName: business?.name ?? 'your team',
+          await this.mail_service.sendWelcomeEmail({
+            to: email,
+            businessName: business?.name,
             recipientName: name,
             designation: 'a Manager',
-            email,
             password,
-            loginUrl: `${process.env.FRONTEND_URL}/login`,
-            currentYear: new Date().getFullYear().toString(),
-          });
-          await this.mail_service.send({
-            to: email,
-            subject: `Welcome to ${business?.name ?? 'TTM'}`,
-            html,
           });
         } catch (mailErr) {
           console.error('Failed to send welcome email invite:', mailErr);
         }
       }
 
-      this.jsonResponse(res, {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        businessId: user.businessId,
-        photoUrl: user.photoUrl,
-        canManageProjects: user.canManageProjects,
-        canManageEmployees: user.canManageEmployees,
-      });
+      this.jsonResponse(res, toManagerResponse(user));
     } catch (err) {
       // Duplicate-key race: the pre-check above can't fully rule out two
       // concurrent creates with the same email; the unique index on
       // Auth.email is the real guarantee.
-      if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: unknown }).code === 11000) {
+      if (isDuplicateKeyError(err)) {
         this.error(res, 409, error_message.email_already_exists);
         return;
       }
@@ -110,97 +94,62 @@ class ManagerController extends ControllerHandler {
     }
   };
 
-  update = async (req: Request, res: Response) => {
-    try {
-      const parsed = updateManagerSchema.safeParse(req.body);
-      if (!parsed.success) {
-        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsed.error),
-        );
-        return;
-      }
+  detail = asyncHandler(async (req: Request, res: Response) => {
+    const businessId = req.businessId!;
+    const { id } = req.params;
 
-      const { name, photoUrl, canManageProjects, canManageEmployees } = parsed.data;
-      const businessId = req.businessId!;
-      const { id } = req.params;
+    // Same tenant/role scoping as update — an admin can only ever fetch
+    // a manager that actually belongs to their own business.
+    const user = await this.detail_service.User({ _id: id, businessId, role: UserRole.Manager });
 
-      // Scoping the filter to businessId + role: Manager (not just _id)
-      // means an admin can never update another business's manager, or a
-      // non-manager record, even by guessing an id.
-      const user = await this.update_service.User(
-        { _id: id, businessId, role: UserRole.Manager },
-        { name, photoUrl, canManageProjects, canManageEmployees },
-      );
-
-      if (!user) {
-        this.error(res, 404, error_message.manager_not_found);
-        return;
-      }
-
-      this.jsonResponse(res, {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        businessId: user.businessId,
-        photoUrl: user.photoUrl,
-        canManageProjects: user.canManageProjects,
-        canManageEmployees: user.canManageEmployees,
-      });
-    } catch (err) {
-      console.error(err);
-      this.error(res, 500, null, err);
+    if (!user) {
+      this.error(res, 404, error_message.manager_not_found);
+      return;
     }
-  };
 
-  list = async (req: Request, res: Response) => {
-    try {
-      const parsedQuery = listManagersQuerySchema.safeParse(req.query);
-      if (!parsedQuery.success) {
-        const message = firstValidationMessage(parsedQuery.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsedQuery.error),
-        );
-        return;
-      }
+    this.jsonResponse(res, toManagerResponse(user));
+  });
 
-      const { page, limit, search } = parsedQuery.data;
-      const businessId = req.businessId!;
-      const { data, total } = await this.list_service.User(
-        { businessId, role: UserRole.Manager },
-        { page, limit, search },
-      );
+  update = asyncHandler(async (req: Request, res: Response) => {
+    const parsed = this.validate(updateManagerSchema, req.body, res);
+    if (!parsed) return;
 
-      this.jsonResponse(res, {
-        data: data.map((user) => ({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          businessId: user.businessId,
-          photoUrl: user.photoUrl,
-          canManageProjects: user.canManageProjects,
-          canManageEmployees: user.canManageEmployees,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.max(1, Math.ceil(total / limit)),
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      this.error(res, 500, null, err);
+    const { name, photoUrl, canManageProjects, canManageEmployees } = parsed;
+    const businessId = req.businessId!;
+    const { id } = req.params;
+
+    // Scoping the filter to businessId + role: Manager (not just _id)
+    // means an admin can never update another business's manager, or a
+    // non-manager record, even by guessing an id.
+    const user = await this.update_service.User(
+      { _id: id, businessId, role: UserRole.Manager },
+      { name, photoUrl, canManageProjects, canManageEmployees },
+    );
+
+    if (!user) {
+      this.error(res, 404, error_message.manager_not_found);
+      return;
     }
-  };
+
+    this.jsonResponse(res, toManagerResponse(user));
+  });
+
+  list = asyncHandler(async (req: Request, res: Response) => {
+    const parsedQuery = this.validate(listManagersQuerySchema, req.query, res);
+    if (!parsedQuery) return;
+
+    const { page, limit, search } = parsedQuery;
+    const businessId = req.businessId!;
+    const { data, total } = await this.list_service.User(
+      { businessId, role: UserRole.Manager },
+      { page, limit, search },
+    );
+
+    this.jsonResponse(res, {
+      data: data.map(toManagerResponse),
+      pagination: buildPaginationMeta(total, page, limit),
+    });
+  });
 }
 
 export default new ManagerController();

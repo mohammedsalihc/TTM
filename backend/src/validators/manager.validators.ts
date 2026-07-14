@@ -23,7 +23,7 @@ export const listManagersQuerySchema = paginationQuerySchema.extend({
 // Email/password/role aren't editable here — this is the simple
 // "edit name/photo/permissions" form, not a full account-management flow.
 export const updateManagerSchema = z.object({
-  name: z.string({ error: 'Name is required' }).trim().min(1, 'Name is required'),
+  name: z.string().trim().min(1, 'Name is required').optional(),
   photoUrl: z.string().trim().url('Invalid photo URL').optional(),
   canManageProjects: z.boolean().optional(),
   canManageEmployees: z.boolean().optional(),

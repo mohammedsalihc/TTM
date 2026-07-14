@@ -1,20 +1,28 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { ControllerHandler } from '../utils/ControllerHandler';
-import { CreateService } from '../services/create-service';
-import { DetailService } from '../services/detail-service';
-import { ListService } from '../services/list-service';
-import { UpdateService } from '../services/update-service';
-import { MailService } from '../services/mail-service';
+import { CreateService } from '../services/createService';
+import { DetailService } from '../services/detailService';
+import { ListService } from '../services/listService';
+import { UpdateService } from '../services/updateService';
+import { MailService } from '../services/mailService';
 import { error_message } from '../constants/errorMessages';
-import { UserRole } from '../types';
+import { SALT_ROUNDS } from '../constants/security';
+import { UserRole, IUser } from '../types';
 import { createEmployeeSchema, listEmployeesQuerySchema, updateEmployeeSchema } from '../validators/employee.validators';
-import { firstValidationMessage } from '../utils/validationHandler';
-import { renderTemplate } from '../utils/renderTemplate';
-import { welcomeTeamMemberEmailTemplate } from '../templates/welcomeTeamMemberEmail';
+import { isDuplicateKeyError } from '../utils/errors';
+import { buildPaginationMeta } from '../utils/pagination';
+import { asyncHandler } from '../utils/asyncHandler';
 
-const SALT_ROUNDS = 10;
+const toEmployeeResponse = (user: IUser) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  businessId: user.businessId,
+  designation: user.designation,
+  photoUrl: user.photoUrl,
+});
 
 class EmployeeController extends ControllerHandler {
   private create_service = new CreateService();
@@ -25,19 +33,10 @@ class EmployeeController extends ControllerHandler {
 
   create = async (req: Request, res: Response) => {
     try {
-      const parsed = createEmployeeSchema.safeParse(req.body);
-      if (!parsed.success) {
-        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsed.error),
-        );
-        return;
-      }
+      const parsed = this.validate(createEmployeeSchema, req.body, res);
+      if (!parsed) return;
 
-      const { name, email, password, designation, photoUrl, sendEmailInvite } = parsed.data;
+      const { name, email, password, designation, photoUrl, sendEmailInvite } = parsed;
       const businessId = req.businessId!;
 
       const existingAuth = await this.detail_service.Auth({ email });
@@ -69,39 +68,24 @@ class EmployeeController extends ControllerHandler {
         // a flaky email provider shouldn't fail the whole create request.
         try {
           const business = await this.detail_service.Business({ _id: businessId });
-          const html = renderTemplate(welcomeTeamMemberEmailTemplate, {
-            businessName: business?.name ?? 'your team',
+          await this.mail_service.sendWelcomeEmail({
+            to: email,
+            businessName: business?.name,
             recipientName: name,
             designation: designation || 'a team member',
-            email,
             password,
-            loginUrl: `${process.env.FRONTEND_URL}/login`,
-            currentYear: new Date().getFullYear().toString(),
-          });
-          await this.mail_service.send({
-            to: email,
-            subject: `Welcome to ${business?.name ?? 'TTM'}`,
-            html,
           });
         } catch (mailErr) {
           console.error('Failed to send welcome email invite:', mailErr);
         }
       }
 
-      this.jsonResponse(res, {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        businessId: user.businessId,
-        designation: user.designation,
-        photoUrl: user.photoUrl,
-      });
+      this.jsonResponse(res, toEmployeeResponse(user));
     } catch (err) {
       // Duplicate-key race: the pre-check above can't fully rule out two
       // concurrent creates with the same email; the unique index on
       // Auth.email is the real guarantee.
-      if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: unknown }).code === 11000) {
+      if (isDuplicateKeyError(err)) {
         this.error(res, 409, error_message.email_already_exists);
         return;
       }
@@ -110,126 +94,64 @@ class EmployeeController extends ControllerHandler {
     }
   };
 
-  detail = async (req: Request, res: Response) => {
-    try {
-      const businessId = req.businessId!;
-      const { id } = req.params;
+  detail = asyncHandler(async (req: Request, res: Response) => {
+    const businessId = req.businessId!;
+    const { id } = req.params;
 
-      // Same tenant/role scoping as update — an admin can only ever fetch
-      // an employee that actually belongs to their own business.
-      const user = await this.detail_service.User({ _id: id, businessId, role: UserRole.Employee });
+    // Same tenant/role scoping as update — an admin can only ever fetch
+    // an employee that actually belongs to their own business.
+    const user = await this.detail_service.User({ _id: id, businessId, role: UserRole.Employee });
 
-      if (!user) {
-        this.error(res, 404, error_message.employee_not_found);
-        return;
-      }
-
-      this.jsonResponse(res, {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        businessId: user.businessId,
-        designation: user.designation,
-        photoUrl: user.photoUrl,
-      });
-    } catch (err) {
-      console.error(err);
-      this.error(res, 500, null, err);
+    if (!user) {
+      this.error(res, 404, error_message.employee_not_found);
+      return;
     }
-  };
 
-  update = async (req: Request, res: Response) => {
-    try {
-      const parsed = updateEmployeeSchema.safeParse(req.body);
-      if (!parsed.success) {
-        const message = firstValidationMessage(parsed.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsed.error),
-        );
-        return;
-      }
+    this.jsonResponse(res, toEmployeeResponse(user));
+  });
 
-      const { name, designation, photoUrl } = parsed.data;
-      const businessId = req.businessId!;
-      const { id } = req.params;
+  update = asyncHandler(async (req: Request, res: Response) => {
+    const parsed = this.validate(updateEmployeeSchema, req.body, res);
+    if (!parsed) return;
 
-      // Scoping the filter to businessId + role: Employee (not just _id)
-      // means an admin can never update another business's employee, or a
-      // non-employee record, even by guessing an id. photoUrl is left
-      // undefined when no new photo was picked — Mongoose drops undefined
-      // keys from the update, so the existing photo is untouched.
-      const user = await this.update_service.User(
-        { _id: id, businessId, role: UserRole.Employee },
-        { name, designation, photoUrl },
-      );
+    const { name, designation, photoUrl } = parsed;
+    const businessId = req.businessId!;
+    const { id } = req.params;
 
-      if (!user) {
-        this.error(res, 404, error_message.employee_not_found);
-        return;
-      }
+    // Scoping the filter to businessId + role: Employee (not just _id)
+    // means an admin can never update another business's employee, or a
+    // non-employee record, even by guessing an id. photoUrl is left
+    // undefined when no new photo was picked — Mongoose drops undefined
+    // keys from the update, so the existing photo is untouched.
+    const user = await this.update_service.User(
+      { _id: id, businessId, role: UserRole.Employee },
+      { name, designation, photoUrl },
+    );
 
-      this.jsonResponse(res, {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        businessId: user.businessId,
-        designation: user.designation,
-        photoUrl: user.photoUrl,
-      });
-    } catch (err) {
-      console.error(err);
-      this.error(res, 500, null, err);
+    if (!user) {
+      this.error(res, 404, error_message.employee_not_found);
+      return;
     }
-  };
 
-  list = async (req: Request, res: Response) => {
-    try {
-      const parsedQuery = listEmployeesQuerySchema.safeParse(req.query);
-      if (!parsedQuery.success) {
-        const message = firstValidationMessage(parsedQuery.error, error_message.body_validation_error.message);
-        this.error(
-          res,
-          400,
-          { message, code: error_message.body_validation_error.code },
-          z.treeifyError(parsedQuery.error),
-        );
-        return;
-      }
+    this.jsonResponse(res, toEmployeeResponse(user));
+  });
 
-      const { page, limit, search } = parsedQuery.data;
-      const businessId = req.businessId!;
-      const { data, total } = await this.list_service.User(
-        { businessId, role: UserRole.Employee },
-        { page, limit, search },
-      );
+  list = asyncHandler(async (req: Request, res: Response) => {
+    const parsedQuery = this.validate(listEmployeesQuerySchema, req.query, res);
+    if (!parsedQuery) return;
 
-      this.jsonResponse(res, {
-        data: data.map((user) => ({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          businessId: user.businessId,
-          designation: user.designation,
-          photoUrl: user.photoUrl,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.max(1, Math.ceil(total / limit)),
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      this.error(res, 500, null, err);
-    }
-  };
+    const { page, limit, search } = parsedQuery;
+    const businessId = req.businessId!;
+    const { data, total } = await this.list_service.User(
+      { businessId, role: UserRole.Employee },
+      { page, limit, search },
+    );
+
+    this.jsonResponse(res, {
+      data: data.map(toEmployeeResponse),
+      pagination: buildPaginationMeta(total, page, limit),
+    });
+  });
 }
 
 export default new EmployeeController();

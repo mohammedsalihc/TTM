@@ -11,4 +11,3 @@ const connectApp = () => {
 
 export default connectApp
 
-

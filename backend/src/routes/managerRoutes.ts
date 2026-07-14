@@ -8,6 +8,7 @@ const router = Router();
 router.use(requireAuth, requireRole(UserRole.Admin));
 router.post('/', managerController.create);
 router.get('/', managerController.list);
+router.get('/:id', managerController.detail);
 router.patch('/:id', managerController.update);
 
 export default router;
