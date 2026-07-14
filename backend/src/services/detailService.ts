@@ -2,7 +2,8 @@ import { QueryFilter } from 'mongoose';
 import { BusinessModel } from '../models/Business';
 import { UserModel } from '../models/User';
 import { AuthModel } from '../models/Auth';
-import { IBusiness, IUser, IAuth } from '../types';
+import { ProjectModel } from '../models/Project';
+import { IBusiness, IUser, IAuth, IProject } from '../types';
 import { objectSanitizer } from '../utils/validationHandler';
 
 export class DetailService {
@@ -19,5 +20,10 @@ export class DetailService {
   Auth = async (filter: QueryFilter<IAuth>): Promise<IAuth | null> => {
     const query = objectSanitizer(filter);
     return AuthModel.findOne(query);
+  };
+
+  Project = async (filter: QueryFilter<IProject>): Promise<IProject | null> => {
+    const query = objectSanitizer(filter);
+    return ProjectModel.findOne(query);
   };
 }

@@ -9,6 +9,7 @@ const error_code = {
   employee: '103',
   manager: '104',
   profile: '105',
+  project: '106',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -47,5 +48,13 @@ export const error_message: Record<string, IErrorCode> = {
   profile_not_found: {
     message: 'Profile not found',
     code: `${error_code.profile}_404`,
+  },
+  project_not_found: {
+    message: 'Project not found',
+    code: `${error_code.project}_404`,
+  },
+  invalid_project_owner: {
+    message: 'Project owner must be an Admin or Manager in your business',
+    code: `${error_code.project}_400`,
   },
 };

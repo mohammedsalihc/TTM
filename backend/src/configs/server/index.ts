@@ -4,6 +4,7 @@ import authRoutes from "../../routes/authRoutes"
 import employeeRoutes from "../../routes/employeeRoutes"
 import managerRoutes from "../../routes/managerRoutes"
 import profileRoutes from "../../routes/profileRoutes"
+import projectRoutes from "../../routes/projectRoutes"
 import uploadRoutes from "../../routes/uploadRoutes"
 import { controllerHandler } from "../../utils/ControllerHandler"
 
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/employees", employeeRoutes)
 app.use("/api/managers", managerRoutes)
 app.use("/api/profile", profileRoutes)
+app.use("/api/projects", projectRoutes)
 app.use("/api/upload", uploadRoutes)
 
 const StartServer = () => {
