@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import PeopleTable from '../components/PeopleTable';
-import AddEmployeeModal from '../components/AddEmployeeModal';
+import AddPersonModal from '../components/AddPersonModal';
 import { getEmployeeRequest, listEmployeesRequest, updateEmployeeRequest } from '../services/employeeService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { colorFromString } from '../utils/avatarColor';
@@ -70,11 +70,13 @@ function Employees() {
     fetchFirstPage();
   };
 
-  const handleEditPerson = async (id: string, updates: { name: string; designation?: string }) => {
+  const handleEditPerson = async (id: string, updates: { name: string; designation?: string; photoUrl?: string }) => {
     const updated = await updateEmployeeRequest(id, updates);
     setEmployees((prev) =>
       prev.map((employee) =>
-        employee.id === id ? { ...employee, name: updated.name, designation: updated.designation } : employee,
+        employee.id === id
+          ? { ...employee, name: updated.name, designation: updated.designation, photoUrl: updated.photoUrl }
+          : employee,
       ),
     );
   };
@@ -103,7 +105,7 @@ function Employees() {
         onEditPerson={handleEditPerson}
         onFetchProfile={handleFetchProfile}
       />
-      <AddEmployeeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={handleCreated} />
+      <AddPersonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={handleCreated} role="employee" />
     </DashboardLayout>
   );
 }

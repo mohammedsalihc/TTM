@@ -4,6 +4,7 @@ import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
 import { MailIcon, LockIcon, BuildingIcon, ProfileIcon } from '../components/icons';
 import { registerRequest } from '../services/authService';
+import { getProfileRequest } from '../services/profileService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 function Register() {
@@ -39,7 +40,14 @@ function Register() {
         password,
       });
       localStorage.setItem('ttm_token', token);
-      localStorage.setItem('ttm_user', JSON.stringify(user));
+      try {
+        const profile = await getProfileRequest();
+        localStorage.setItem('ttm_user', JSON.stringify(profile));
+      } catch {
+        // Registration itself already succeeded — don't block navigation
+        // over a secondary profile-fetch failure.
+        localStorage.setItem('ttm_user', JSON.stringify(user));
+      }
       navigate('/dashboard');
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to create account. Please try again.'));

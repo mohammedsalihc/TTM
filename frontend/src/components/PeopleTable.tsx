@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Avatar from './Avatar';
 import RowActions from './RowActions';
 import Spinner from './Spinner';
-import ViewProfileModal from './ViewProfileModal';
-import EditProfileModal from './EditProfileModal';
+import ProfileModal from './ProfileModal';
 import { MailIcon, SearchIcon } from './icons';
 import { TeamMember } from '../types';
 
@@ -15,6 +14,9 @@ interface PeopleTableProps {
   addButtonLabel: string;
   people: TeamMember[];
   showDesignation?: boolean;
+  // Manager-only permission toggles (Manage Projects / Manage Employees) in
+  // the edit modal — Managers.tsx passes this, Employees.tsx doesn't.
+  showPermissionToggles?: boolean;
   onAddClick?: () => void;
   search: string;
   onSearchChange: (value: string) => void;
@@ -23,7 +25,16 @@ interface PeopleTableProps {
   onLoadMore: () => void;
   isLoading?: boolean;
   isLoadingMore?: boolean;
-  onEditPerson?: (id: string, updates: { name: string; designation?: string }) => Promise<void>;
+  onEditPerson?: (
+    id: string,
+    updates: {
+      name: string;
+      designation?: string;
+      photoUrl?: string;
+      canManageProjects?: boolean;
+      canManageEmployees?: boolean;
+    },
+  ) => Promise<void>;
   onFetchProfile?: (id: string) => Promise<TeamMember>;
 }
 
@@ -37,6 +48,7 @@ function PeopleTable({
   addButtonLabel,
   people,
   showDesignation = false,
+  showPermissionToggles = false,
   onAddClick,
   search,
   onSearchChange,
@@ -49,10 +61,8 @@ function PeopleTable({
   onFetchProfile,
 }: PeopleTableProps) {
   const [searchInput, setSearchInput] = useState(search);
-  const [viewingPerson, setViewingPerson] = useState<TeamMember | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<TeamMember | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activePerson, setActivePerson] = useState<TeamMember | null>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -199,12 +209,12 @@ function PeopleTable({
                   <td className="px-6 py-4">
                     <RowActions
                       onViewProfile={() => {
-                        setViewingPerson(person);
-                        setIsViewModalOpen(true);
+                        setActivePerson(person);
+                        setModalMode('view');
                       }}
                       onEdit={() => {
-                        setEditingPerson(person);
-                        setIsEditModalOpen(true);
+                        setActivePerson(person);
+                        setModalMode('edit');
                       }}
                     />
                   </td>
@@ -226,20 +236,21 @@ function PeopleTable({
         </div>
       )}
 
-      <ViewProfileModal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        person={viewingPerson}
+      <ProfileModal
+        isOpen={modalMode !== null}
+        onClose={() => setModalMode(null)}
+        person={activePerson}
+        columnLabel={columnLabel}
+        initialMode={modalMode ?? 'view'}
+        showDesignation={showDesignation}
+        showPermissionToggles={showPermissionToggles}
+        onSave={
+          onEditPerson &&
+          (async (updates) => {
+            if (activePerson) await onEditPerson(activePerson.id, updates);
+          })
+        }
         onRefresh={onFetchProfile}
-      />
-
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        person={editingPerson}
-        onSave={async (updates) => {
-          if (editingPerson) await onEditPerson?.(editingPerson.id, updates);
-        }}
       />
     </div>
   );

@@ -16,16 +16,24 @@ import {
 import { generatePassword } from '../utils/generatePassword';
 import { randomColor } from '../utils/avatarColor';
 import { createEmployeeRequest } from '../services/employeeService';
+import { createManagerRequest } from '../services/managerService';
 import { uploadImageRequest } from '../services/uploadService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
-interface AddEmployeeModalProps {
+type PersonRole = 'employee' | 'manager';
+
+interface AddPersonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated: () => void;
+  // Only real difference between "Add Employee" and "Add Manager": managers
+  // don't have a Designation field, and each role calls its own create API.
+  role: PersonRole;
 }
 
-function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps) {
+const roleLabel: Record<PersonRole, string> = { employee: 'Employee', manager: 'Manager' };
+
+function AddPersonModal({ isOpen, onClose, onCreated, role }: AddPersonModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [designation, setDesignation] = useState('');
@@ -110,24 +118,34 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
         }
       }
 
-      await createEmployeeRequest({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        designation: designation.trim() || undefined,
-        photoUrl,
-        sendEmailInvite,
-      });
+      if (role === 'employee') {
+        await createEmployeeRequest({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          designation: designation.trim() || undefined,
+          photoUrl,
+          sendEmailInvite,
+        });
+      } else {
+        await createManagerRequest({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          photoUrl,
+          sendEmailInvite,
+        });
+      }
       onCreated();
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Unable to add employee. Please try again.'));
+      setError(getApiErrorMessage(err, `Unable to add ${roleLabel[role].toLowerCase()}. Please try again.`));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Employee">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Add ${roleLabel[role]}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex justify-center">
           <div className="relative">
@@ -158,7 +176,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
         </div>
 
         <div>
-          <label htmlFor="emp-name" className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="person-name" className="block text-sm font-medium text-gray-700 mb-1.5">
             Full name
           </label>
           <div className="relative">
@@ -166,7 +184,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
               <ProfileIcon size={16} />
             </span>
             <input
-              id="emp-name"
+              id="person-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -177,7 +195,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
         </div>
 
         <div>
-          <label htmlFor="emp-email" className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="person-email" className="block text-sm font-medium text-gray-700 mb-1.5">
             Email
           </label>
           <div className="relative">
@@ -185,7 +203,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
               <MailIcon size={16} />
             </span>
             <input
-              id="emp-email"
+              id="person-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -195,27 +213,29 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
           </div>
         </div>
 
-        <div>
-          <label htmlFor="emp-designation" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Designation
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400" aria-hidden="true">
-              <BuildingIcon size={16} />
-            </span>
-            <input
-              id="emp-designation"
-              type="text"
-              value={designation}
-              onChange={(e) => setDesignation(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              placeholder="Designation"
-            />
+        {role === 'employee' && (
+          <div>
+            <label htmlFor="person-designation" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Designation
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400" aria-hidden="true">
+                <BuildingIcon size={16} />
+              </span>
+              <input
+                id="person-designation"
+                type="text"
+                value={designation}
+                onChange={(e) => setDesignation(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                placeholder="Designation"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
-          <label htmlFor="emp-password" className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="person-password" className="block text-sm font-medium text-gray-700 mb-1.5">
             Password
           </label>
           <div className="relative">
@@ -223,7 +243,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
               <LockIcon size={16} />
             </span>
             <input
-              id="emp-password"
+              id="person-password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -296,7 +316,7 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
             className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isSubmitting && <Spinner size={16} />}
-            {isSubmitting ? 'Adding...' : 'Add Employee'}
+            {isSubmitting ? 'Adding...' : `Add ${roleLabel[role]}`}
           </button>
         </div>
       </form>
@@ -304,4 +324,4 @@ function AddEmployeeModal({ isOpen, onClose, onCreated }: AddEmployeeModalProps)
   );
 }
 
-export default AddEmployeeModal;
+export default AddPersonModal;

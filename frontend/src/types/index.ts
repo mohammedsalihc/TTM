@@ -4,4 +4,6 @@ export * from './project';
 export * from './teamMember';
 export * from './auth';
 export * from './employee';
+export * from './manager';
+export * from './profile';
 export * from './pagination';

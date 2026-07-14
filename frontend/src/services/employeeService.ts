@@ -10,6 +10,7 @@ export interface ListEmployeesParams {
 export interface UpdateEmployeePayload {
   name: string;
   designation?: string;
+  photoUrl?: string;
 }
 
 export const listEmployeesRequest = (params: ListEmployeesParams = {}) =>
