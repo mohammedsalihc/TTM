@@ -13,6 +13,7 @@ const error_code = {
   task: '107',
   comment: '108',
   attachment: '109',
+  notification: '110',
 };
 
 export const error_message: Record<string, IErrorCode> = {
@@ -79,5 +80,9 @@ export const error_message: Record<string, IErrorCode> = {
   attachment_not_found: {
     message: 'Attachment not found',
     code: `${error_code.attachment}_404`,
+  },
+  notification_not_found: {
+    message: 'Notification not found',
+    code: `${error_code.notification}_404`,
   },
 };

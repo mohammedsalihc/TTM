@@ -3,7 +3,8 @@ import { UserModel } from '../models/User';
 import { ProjectModel } from '../models/Project';
 import { TaskModel } from '../models/Task';
 import { CommentModel } from '../models/Comment';
-import { IUser, IProject, ITask, IComment } from '../types';
+import { NotificationModel } from '../models/Notification';
+import { IUser, IProject, ITask, IComment, INotification } from '../types';
 import { objectSanitizer, escapeRegex } from '../utils/validationHandler';
 
 interface PageArgs {
@@ -85,6 +86,23 @@ export class ListService {
     const [data, total] = await Promise.all([
       CommentModel.find(query).sort({ createdAt: 1 }).skip(skip).limit(limit),
       CommentModel.countDocuments(query),
+    ]);
+
+    return { data, total };
+  };
+
+  // No `search` — a notification feed, sorted newest-first like Project/Task
+  // (unlike Comment, which reads as a chronological thread).
+  Notification = async (
+    filter: QueryFilter<INotification>,
+    { page, limit }: Pick<PageArgs, 'page' | 'limit'>,
+  ): Promise<{ data: INotification[]; total: number }> => {
+    const query = objectSanitizer(filter);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      NotificationModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      NotificationModel.countDocuments(query),
     ]);
 
     return { data, total };

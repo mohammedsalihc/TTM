@@ -6,3 +6,4 @@ export * from './response.types';
 export * from './project.types';
 export * from './task.types';
 export * from './comment.types';
+export * from './notification.types';

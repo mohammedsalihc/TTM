@@ -6,7 +6,7 @@ import { ListService } from '../services/listService';
 import { UpdateService } from '../services/updateService';
 import { DeleteService } from '../services/deleteService';
 import { error_message } from '../constants/errorMessages';
-import { UserRole, ITask } from '../types';
+import { UserRole, ITask, NotificationType } from '../types';
 import {
   createTaskSchema,
   listTasksQuerySchema,
@@ -41,6 +41,29 @@ class TaskController extends ControllerHandler {
   private list_service = new ListService();
   private update_service = new UpdateService();
   private delete_service = new DeleteService();
+
+  // Best-effort: the task is already created/updated either way — a
+  // notification failure shouldn't fail the whole request (same pattern as
+  // the welcome-email invite in employee/manager create).
+  private notifyAssignees = async (task: ITask, assigneeIds: string[]) => {
+    if (assigneeIds.length === 0) return;
+    try {
+      await Promise.all(
+        assigneeIds.map((userId) =>
+          this.create_service.Notification({
+            businessId: task.businessId,
+            userId,
+            message: `You were assigned to "${task.title}"`,
+            type: NotificationType.TaskAssigned,
+            relatedProjectId: task.projectId,
+            relatedTaskId: task._id!,
+          }),
+        ),
+      );
+    } catch (err) {
+      console.error('Failed to create task-assignment notifications:', err);
+    }
+  };
 
   create = asyncHandler(async (req: Request, res: Response) => {
     const parsed = this.validate(createTaskSchema, req.body, res);
@@ -79,6 +102,8 @@ class TaskController extends ControllerHandler {
       createdBy: req.userId!,
       ...rest,
     });
+
+    await this.notifyAssignees(task, assignedTo ?? []);
 
     this.jsonResponse(res, toTaskResponse(task));
   });
@@ -160,6 +185,14 @@ class TaskController extends ControllerHandler {
     if (!updated) {
       this.error(res, 404, error_message.task_not_found);
       return;
+    }
+
+    // Only notify newly added assignees — someone already on the task
+    // shouldn't get re-notified just because the assignee list was touched.
+    if (assignedTo) {
+      const previouslyAssigned = new Set((task.assignedTo ?? []).map((userId) => userId.toString()));
+      const newlyAssigned = assignedTo.filter((userId) => !previouslyAssigned.has(userId));
+      await this.notifyAssignees(updated, newlyAssigned);
     }
 
     this.jsonResponse(res, toTaskResponse(updated));
