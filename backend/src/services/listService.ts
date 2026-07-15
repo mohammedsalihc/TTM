@@ -47,8 +47,16 @@ export class ListService {
 
     const skip = (page - 1) * limit;
 
+    // Populated so the response can embed owner/member name+photo directly
+    // (see projectController's toProjectResponse) instead of the frontend
+    // having to resolve raw ids against separate employee/manager lists.
     const [data, total] = await Promise.all([
-      ProjectModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ProjectModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('ownerId', 'name photoUrl')
+        .populate('memberIds', 'name photoUrl'),
       ProjectModel.countDocuments(query),
     ]);
 

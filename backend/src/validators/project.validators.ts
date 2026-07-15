@@ -12,7 +12,11 @@ export const createProjectSchema = z.object({
   startDate: z.coerce.date({ error: 'Invalid start date' }).optional(),
   dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
   ownerId: z.string({ error: 'Project owner is required' }).trim().min(1, 'Project owner is required'),
-  memberIds: z.array(z.string()).optional(),
+  // A project must have at least one member (an employee) — the frontend's
+  // Add Project form enforces this too, but the API shouldn't rely on that.
+  memberIds: z
+    .array(z.string(), { error: 'At least one employee is required' })
+    .min(1, 'At least one employee is required'),
 });
 
 export const updateProjectSchema = z.object({
