@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { ControllerHandler } from '../utils/ControllerHandler';
 import { CreateService } from '../services/createService';
 import { DetailService } from '../services/detailService';
+import { ListService } from '../services/listService';
 import { error_message } from '../constants/errorMessages';
 import { IComment } from '../types';
-import { createCommentSchema } from '../validators/comment.validators';
+import { createCommentSchema, listCommentsQuerySchema } from '../validators/comment.validators';
 import { canViewTask } from '../utils/taskAccess';
+import { buildPaginationMeta } from '../utils/pagination';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const toCommentResponse = (comment: IComment) => ({
@@ -19,6 +21,7 @@ const toCommentResponse = (comment: IComment) => ({
 class CommentController extends ControllerHandler {
   private create_service = new CreateService();
   private detail_service = new DetailService();
+  private list_service = new ListService();
 
   create = asyncHandler(async (req: Request, res: Response) => {
     const parsed = this.validate(createCommentSchema, req.body, res);
@@ -50,6 +53,33 @@ class CommentController extends ControllerHandler {
     });
 
     this.jsonResponse(res, toCommentResponse(comment));
+  });
+
+  list = asyncHandler(async (req: Request, res: Response) => {
+    const parsedQuery = this.validate(listCommentsQuerySchema, req.query, res);
+    if (!parsedQuery) return;
+
+    const { page, limit } = parsedQuery;
+    const businessId = req.businessId!;
+    const taskId = req.params.taskId as string;
+
+    const task = await this.detail_service.Task({ _id: taskId, businessId });
+    if (!task) {
+      this.error(res, 404, error_message.task_not_found);
+      return;
+    }
+
+    if (!canViewTask(req, task)) {
+      this.error(res, 403, error_message.forbidden);
+      return;
+    }
+
+    const { data, total } = await this.list_service.Comment({ taskId, businessId }, { page, limit });
+
+    this.jsonResponse(res, {
+      data: data.map(toCommentResponse),
+      pagination: buildPaginationMeta(total, page, limit),
+    });
   });
 }
 

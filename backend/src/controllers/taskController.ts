@@ -30,6 +30,7 @@ const toTaskResponse = (task: ITask) => ({
   estimatedHours: task.estimatedHours,
   dueDate: task.dueDate,
   labels: task.labels,
+  attachments: task.attachments,
   createdBy: task.createdBy,
   createdAt: task.createdAt,
 });

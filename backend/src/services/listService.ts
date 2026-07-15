@@ -2,7 +2,8 @@ import { QueryFilter } from 'mongoose';
 import { UserModel } from '../models/User';
 import { ProjectModel } from '../models/Project';
 import { TaskModel } from '../models/Task';
-import { IUser, IProject, ITask } from '../types';
+import { CommentModel } from '../models/Comment';
+import { IUser, IProject, ITask, IComment } from '../types';
 import { objectSanitizer, escapeRegex } from '../utils/validationHandler';
 
 interface PageArgs {
@@ -67,6 +68,23 @@ export class ListService {
     const [data, total] = await Promise.all([
       TaskModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       TaskModel.countDocuments(query),
+    ]);
+
+    return { data, total };
+  };
+
+  // No `search` — comments are a chronological thread, not a searchable
+  // list, so sort ascending (oldest first) instead of newest-first.
+  Comment = async (
+    filter: QueryFilter<IComment>,
+    { page, limit }: Pick<PageArgs, 'page' | 'limit'>,
+  ): Promise<{ data: IComment[]; total: number }> => {
+    const query = objectSanitizer(filter);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      CommentModel.find(query).sort({ createdAt: 1 }).skip(skip).limit(limit),
+      CommentModel.countDocuments(query),
     ]);
 
     return { data, total };
