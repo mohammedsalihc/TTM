@@ -6,7 +6,7 @@ import { ListService } from '../services/listService';
 import { UpdateService } from '../services/updateService';
 import { DeleteService } from '../services/deleteService';
 import { error_message } from '../constants/errorMessages';
-import { UserRole, ITask, NotificationType } from '../types';
+import { UserRole, ITask, IUser, NotificationType } from '../types';
 import {
   createTaskSchema,
   listTasksQuerySchema,
@@ -17,6 +17,7 @@ import { canManageProject } from '../utils/projectAccess';
 import { canViewTask } from '../utils/taskAccess';
 import { buildPaginationMeta } from '../utils/pagination';
 import { asyncHandler } from '../utils/asyncHandler';
+import { ActivityLogService } from '../utils/activityLogService';
 
 const toTaskResponse = (task: ITask) => ({
   id: task._id,
@@ -41,6 +42,7 @@ class TaskController extends ControllerHandler {
   private list_service = new ListService();
   private update_service = new UpdateService();
   private delete_service = new DeleteService();
+  private activity_log_service = new ActivityLogService();
 
   // Best-effort: the task is already created/updated either way — a
   // notification failure shouldn't fail the whole request (same pattern as
@@ -65,6 +67,25 @@ class TaskController extends ControllerHandler {
     }
   };
 
+  // Logs one entry per assignee (matches the "Manager assigned task to
+  // John" example) — `assignees` is the already-fetched User docs from the
+  // validation step above, so this doesn't re-query.
+  private logTaskAssignments = async (actorId: string, task: ITask, assignees: (IUser | null)[]) => {
+    await Promise.all(
+      assignees
+        .filter((user): user is IUser => !!user)
+        .map((user) =>
+          this.activity_log_service.log({
+            businessId: task.businessId,
+            projectId: task.projectId,
+            taskId: task._id!,
+            actorId,
+            action: `assigned task "${task.title}" to ${user.name}`,
+          }),
+        ),
+    );
+  };
+
   create = asyncHandler(async (req: Request, res: Response) => {
     const parsed = this.validate(createTaskSchema, req.body, res);
     if (!parsed) return;
@@ -85,8 +106,9 @@ class TaskController extends ControllerHandler {
       return;
     }
 
+    let assignees: (IUser | null)[] = [];
     if (assignedTo && assignedTo.length > 0) {
-      const assignees = await Promise.all(
+      assignees = await Promise.all(
         assignedTo.map((userId) => this.detail_service.User({ _id: userId, businessId, role: UserRole.Employee })),
       );
       if (assignees.some((user) => !user)) {
@@ -104,6 +126,14 @@ class TaskController extends ControllerHandler {
     });
 
     await this.notifyAssignees(task, assignedTo ?? []);
+    await this.activity_log_service.log({
+      businessId,
+      projectId,
+      taskId: task._id!,
+      actorId: req.userId!,
+      action: `created task "${task.title}"`,
+    });
+    await this.logTaskAssignments(req.userId!, task, assignees);
 
     this.jsonResponse(res, toTaskResponse(task));
   });
@@ -171,8 +201,9 @@ class TaskController extends ControllerHandler {
 
     const { assignedTo, ...rest } = parsed;
 
+    let assignees: (IUser | null)[] = [];
     if (assignedTo) {
-      const assignees = await Promise.all(
+      assignees = await Promise.all(
         assignedTo.map((userId) => this.detail_service.User({ _id: userId, businessId, role: UserRole.Employee })),
       );
       if (assignees.some((user) => !user)) {
@@ -187,12 +218,16 @@ class TaskController extends ControllerHandler {
       return;
     }
 
-    // Only notify newly added assignees — someone already on the task
+    // Only notify/log newly added assignees — someone already on the task
     // shouldn't get re-notified just because the assignee list was touched.
     if (assignedTo) {
       const previouslyAssigned = new Set((task.assignedTo ?? []).map((userId) => userId.toString()));
       const newlyAssigned = assignedTo.filter((userId) => !previouslyAssigned.has(userId));
+      const newlyAssignedUsers = assignees.filter(
+        (user): user is IUser => !!user && !previouslyAssigned.has(user._id!.toString()),
+      );
       await this.notifyAssignees(updated, newlyAssigned);
+      await this.logTaskAssignments(req.userId!, updated, newlyAssignedUsers);
     }
 
     this.jsonResponse(res, toTaskResponse(updated));
@@ -227,11 +262,26 @@ class TaskController extends ControllerHandler {
       return;
     }
 
+    const previousStatus = task.status;
     const updated = await this.update_service.Task({ _id: id, businessId }, { status: parsed.status });
     if (!updated) {
       this.error(res, 404, error_message.task_not_found);
       return;
     }
+
+    // "completed" gets its own phrasing (matches the "John completed task"
+    // example); any other transition reads as "changed status A → B".
+    const action =
+      parsed.status === 'completed'
+        ? `completed task "${updated.title}"`
+        : `changed task "${updated.title}" status from ${previousStatus} to ${parsed.status}`;
+    await this.activity_log_service.log({
+      businessId,
+      projectId: updated.projectId,
+      taskId: updated._id!,
+      actorId: req.userId!,
+      action,
+    });
 
     this.jsonResponse(res, toTaskResponse(updated));
   });
@@ -251,6 +301,16 @@ class TaskController extends ControllerHandler {
       this.error(res, 403, error_message.forbidden);
       return;
     }
+
+    // Logged before the delete, same reasoning as project delete — see
+    // projectController.remove.
+    await this.activity_log_service.log({
+      businessId,
+      projectId: task.projectId,
+      taskId: task._id!,
+      actorId: req.userId!,
+      action: `deleted task "${task.title}"`,
+    });
 
     await this.delete_service.Task({ _id: id, businessId });
     this.jsonResponse(res);

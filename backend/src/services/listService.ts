@@ -4,7 +4,8 @@ import { ProjectModel } from '../models/Project';
 import { TaskModel } from '../models/Task';
 import { CommentModel } from '../models/Comment';
 import { NotificationModel } from '../models/Notification';
-import { IUser, IProject, ITask, IComment, INotification } from '../types';
+import { ActivityLogModel } from '../models/ActivityLog';
+import { IUser, IProject, ITask, IComment, INotification, IActivityLog } from '../types';
 import { objectSanitizer, escapeRegex } from '../utils/validationHandler';
 
 interface PageArgs {
@@ -103,6 +104,22 @@ export class ListService {
     const [data, total] = await Promise.all([
       NotificationModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       NotificationModel.countDocuments(query),
+    ]);
+
+    return { data, total };
+  };
+
+  // No `search` — an audit feed, sorted newest-first.
+  ActivityLog = async (
+    filter: QueryFilter<IActivityLog>,
+    { page, limit }: Pick<PageArgs, 'page' | 'limit'>,
+  ): Promise<{ data: IActivityLog[]; total: number }> => {
+    const query = objectSanitizer(filter);
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      ActivityLogModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ActivityLogModel.countDocuments(query),
     ]);
 
     return { data, total };

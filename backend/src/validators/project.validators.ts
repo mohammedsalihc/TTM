@@ -31,5 +31,10 @@ export const listProjectsQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().optional(),
 });
 
+// No extra fields beyond page/limit — the activity feed isn't free-text
+// searched, just paginated newest-first (see ListService.ActivityLog).
+export const listActivityQuerySchema = paginationQuerySchema;
+
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
+export type ListActivityQuery = z.infer<typeof listActivityQuerySchema>;

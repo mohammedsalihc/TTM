@@ -14,5 +14,6 @@ router.get('/', projectController.list);
 router.get('/:id', projectController.detail);
 router.patch('/:id', projectController.update);
 router.delete('/:id', projectController.remove);
+router.get('/:projectId/activity', projectController.activity);
 
 export default router;

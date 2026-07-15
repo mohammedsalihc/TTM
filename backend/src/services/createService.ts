@@ -6,7 +6,8 @@ import { ProjectModel } from '../models/Project';
 import { TaskModel } from '../models/Task';
 import { CommentModel } from '../models/Comment';
 import { NotificationModel } from '../models/Notification';
-import { IBusiness, IUser, IAuth, IProject, ITask, IComment, INotification } from '../types';
+import { ActivityLogModel } from '../models/ActivityLog';
+import { IBusiness, IUser, IAuth, IProject, ITask, IComment, INotification, IActivityLog } from '../types';
 
 // _id/createdAt are server/DB-assigned — never part of a create payload.
 type CreateInput<T> = Omit<T, '_id' | 'createdAt'>;
@@ -43,5 +44,9 @@ export class CreateService {
 
   Notification = async (body: CreateInput<INotification>): Promise<INotification> => {
     return NotificationModel.create(body);
+  };
+
+  ActivityLog = async (body: CreateInput<IActivityLog>): Promise<IActivityLog> => {
+    return ActivityLogModel.create(body);
   };
 }

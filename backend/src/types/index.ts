@@ -7,3 +7,4 @@ export * from './project.types';
 export * from './task.types';
 export * from './comment.types';
 export * from './notification.types';
+export * from './activityLog.types';
