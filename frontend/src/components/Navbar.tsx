@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
 import { LogoutIcon } from './icons';
-import { currentUser } from '../data/currentUser';
-
-const businessName = 'Acme Inc.';
+import { useAuth } from '../context/AuthContext';
+import { colorFromString } from '../utils/avatarColor';
 
 const MenuIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -17,10 +16,18 @@ interface NavbarProps {
   onMenuClick: () => void;
 }
 
-// No AuthContext/real auth yet — logout just routes back to /login,
-// and the business name is a placeholder until multi-tenant/org data exists.
 function Navbar({ onMenuClick }: NavbarProps) {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  const displayName = profile?.name ?? '';
+  const businessName = profile?.businessName ?? 'TTM';
+
+  const handleLogout = () => {
+    localStorage.removeItem('ttm_token');
+    localStorage.removeItem('ttm_user');
+    navigate('/login');
+  };
 
   return (
     <header className="flex items-center justify-between gap-3 px-4 lg:px-8 py-3 bg-white border-b border-gray-200 sticky top-0 z-20">
@@ -37,11 +44,15 @@ function Navbar({ onMenuClick }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <Avatar name={currentUser.name} color={currentUser.avatarColor} size={32} />
-        <span className="text-sm font-medium text-gray-700 hidden sm:inline">{currentUser.name}</span>
+        {displayName && (
+          <>
+            <Avatar name={displayName} color={colorFromString(displayName)} size={32} imageUrl={profile?.photoUrl} />
+            <span className="text-sm font-medium text-gray-700 hidden sm:inline">{displayName}</span>
+          </>
+        )}
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={handleLogout}
           aria-label="Logout"
           className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-red-600 rounded-lg px-2.5 py-1.5 hover:bg-red-50 transition-colors"
         >

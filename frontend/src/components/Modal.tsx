@@ -6,13 +6,17 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  // Most forms fit max-w-md; wider forms (e.g. Add Project, with its two-
+  // column date pickers) can opt into more room instead of everyone being
+  // squeezed into the same width.
+  maxWidthClassName?: string;
 }
 
 const TRANSITION_MS = 180;
 
-// Shared shell for any "Add X" / "Edit X" form (Employees now, Managers and
-// Projects soon) — pages own the open/close state and pass form content in.
-function Modal({ isOpen, onClose, title, children }: ModalProps) {
+// Shared shell for any "Add X" / "Edit X" form (Employees, Managers,
+// Projects, ...) — pages own the open/close state and pass form content in.
+function Modal({ isOpen, onClose, title, children, maxWidthClassName = 'max-w-md' }: ModalProps) {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
   const [hasSettled, setHasSettled] = useState(false);
@@ -76,7 +80,7 @@ function Modal({ isOpen, onClose, title, children }: ModalProps) {
         aria-hidden="true"
       />
       <div
-        className={`relative w-full max-w-md bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-6 max-h-[90vh] overflow-y-auto ${
+        className={`relative w-full ${maxWidthClassName} bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-6 max-h-[90vh] overflow-y-auto ${
           hasSettled
             ? 'opacity-100'
             : `transition-all ease-out ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-3'}`

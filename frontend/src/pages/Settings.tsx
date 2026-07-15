@@ -1,11 +1,12 @@
 import DashboardLayout from '../components/DashboardLayout';
 import { exportFullReport } from '../utils/exportReport';
-
-// No AuthContext/real auth yet, so the admin-only export section is gated
-// behind this hardcoded flag. Swap for a real role check once auth exists.
-const isAdmin = true;
+import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
 
 function Settings() {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === UserRole.Admin;
+
   return (
     <DashboardLayout>
       <div className="max-w-2xl space-y-6">

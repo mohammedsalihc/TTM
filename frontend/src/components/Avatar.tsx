@@ -1,3 +1,5 @@
+import { avatarUrl } from '../utils/cloudinaryUrl';
+
 interface AvatarProps {
   name: string;
   color: string;
@@ -17,7 +19,7 @@ function Avatar({ name, color, size = 44, className = '', imageUrl }: AvatarProp
   if (imageUrl) {
     return (
       <img
-        src={imageUrl}
+        src={avatarUrl(imageUrl, size)}
         alt={name}
         title={name}
         className={`rounded-full object-cover shrink-0 ${className}`}

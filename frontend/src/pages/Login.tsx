@@ -4,11 +4,12 @@ import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
 import { MailIcon, LockIcon } from '../components/icons';
 import { loginRequest } from '../services/authService';
-import { getProfileRequest } from '../services/profileService';
+import { useAuth } from '../context/AuthContext';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 function Login() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,15 +28,10 @@ function Login() {
     try {
       const { token, user } = await loginRequest({ email: email.trim(), password });
       localStorage.setItem('ttm_token', token);
-      try {
-        const profile = await getProfileRequest();
-        localStorage.setItem('ttm_user', JSON.stringify(profile));
-      } catch {
-        // Login itself already succeeded — don't block navigation over a
-        // secondary profile-fetch failure, just fall back to the basic
-        // user object the login response already gave us.
-        localStorage.setItem('ttm_user', JSON.stringify(user));
-      }
+      // Login itself already succeeded — refresh() falls back to the basic
+      // user object the login response gave us if the live profile fetch
+      // fails, so a secondary failure here doesn't block navigation.
+      await refresh(user);
       navigate('/dashboard');
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to sign in. Please try again.'));

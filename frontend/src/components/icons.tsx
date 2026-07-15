@@ -201,3 +201,20 @@ export const CopyIcon = ({ size = 14 }: IconProps) => (
     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
   </svg>
 );
+
+// Feather Icons (MIT) — "calendar"
+export const CalendarIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+// Feather Icons (MIT) — "chevron-down"
+export const ChevronDownIcon = ({ size = 16 }: IconProps) => (
+  <svg {...baseProps(size)} aria-hidden="true">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);

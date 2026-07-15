@@ -2,22 +2,28 @@ import Avatar from './Avatar';
 import RowActions from './RowActions';
 import { statusStyles } from './projectStatusStyles';
 import { Project } from '../types';
-
-const avatarPalette = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9'];
+import { colorFromString } from '../utils/avatarColor';
 
 interface ProjectCardProps {
   project: Project;
   onView?: (project: Project) => void;
+  onDelete?: (project: Project) => void;
 }
 
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
 // The card itself is the click target (cursor-pointer + hover shadow signal
-// this). Row actions stop propagation so Assign/Edit/Delete don't also
-// trigger onView.
-function ProjectCard({ project, onView }: ProjectCardProps) {
-  const { bar, badge } = statusStyles[project.status];
+// this). Row actions stop propagation so Delete doesn't also trigger onView.
+// No progress bar here — the real backend has no percent field, and
+// computing one would mean a task-count query per card; a completion
+// indicator belongs on the detail page instead, where tasks are loaded.
+// Owner/members come pre-populated (name+photo) straight from the backend
+// (Mongoose .populate()) — no separate id→name lookup needed on this card.
+function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
+  const { badge, label } = statusStyles[project.status];
   const maxVisibleAvatars = 4;
-  const visibleEmployees = project.employees.slice(0, maxVisibleAvatars);
-  const extraCount = project.employees.length - visibleEmployees.length;
+  const visibleMembers = project.members.slice(0, maxVisibleAvatars);
+  const extraCount = project.members.length - visibleMembers.length;
 
   return (
     <div
@@ -34,32 +40,24 @@ function ProjectCard({ project, onView }: ProjectCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-base font-semibold text-gray-900 leading-snug">{project.name}</h3>
-        <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${badge}`}>
-          {project.status}
-        </span>
+        <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${badge}`}>{label}</span>
       </div>
 
-      <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
-
-      <div>
-        <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
-          <div className={`h-full rounded-full ${bar}`} style={{ width: `${project.percent}%` }} />
-        </div>
-        <p className="text-xs text-gray-500 mt-1.5">{project.percent}% complete</p>
-      </div>
+      <p className="text-sm text-gray-500 line-clamp-2">{project.description || 'No description yet.'}</p>
 
       <div className="flex items-center justify-between pt-1 border-t border-gray-100 -mx-5 px-5 pt-3">
         <div className="min-w-0">
           <p className="text-xs text-gray-400">Manager</p>
-          <p className="text-sm font-medium text-gray-800 truncate">{project.manager}</p>
+          <p className="text-sm font-medium text-gray-800 truncate">{project.owner?.name ?? '—'}</p>
         </div>
 
         <div className="flex items-center -space-x-2">
-          {visibleEmployees.map((name, index) => (
+          {visibleMembers.map((member) => (
             <Avatar
-              key={name}
-              name={name}
-              color={avatarPalette[index % avatarPalette.length]}
+              key={member.id}
+              name={member.name}
+              color={colorFromString(member.name)}
+              imageUrl={member.photoUrl}
               size={28}
               className="ring-2 ring-white"
             />
@@ -73,9 +71,9 @@ function ProjectCard({ project, onView }: ProjectCardProps) {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">Due {project.deadline}</p>
+        <p className="text-xs text-gray-400">{project.dueDate ? `Due ${formatDate(project.dueDate)}` : 'No due date'}</p>
         <div onClick={(e) => e.stopPropagation()}>
-          <RowActions />
+          <RowActions onDelete={() => onDelete?.(project)} />
         </div>
       </div>
     </div>

@@ -1,6 +1,29 @@
-import { Project } from '../types';
+// Dashboard.tsx's "Project Progress" section still runs on this mock data —
+// real aggregate progress stats need a backend endpoint that doesn't exist
+// yet, so this is intentionally left as-is rather than wired to the real
+// Projects API. Kept fully self-contained (its own status type + styles)
+// so it doesn't depend on the real `Project`/`ProjectStatus` types in
+// `../types`, which now reflect the actual backend contract.
+export type MockProjectStatus = 'On track' | 'At risk' | 'Overdue';
 
-export const projects: Project[] = [
+export interface MockProject {
+  id: string;
+  name: string;
+  description: string;
+  manager: string;
+  employees: string[];
+  percent: number;
+  status: MockProjectStatus;
+  deadline: string;
+}
+
+export const mockProjectStatusStyles: Record<MockProjectStatus, { bar: string; badge: string }> = {
+  'On track': { bar: 'bg-indigo-600', badge: 'bg-indigo-50 text-indigo-600' },
+  'At risk': { bar: 'bg-amber-500', badge: 'bg-amber-50 text-amber-600' },
+  Overdue: { bar: 'bg-red-500', badge: 'bg-red-50 text-red-600' },
+};
+
+export const projects: MockProject[] = [
   {
     id: 'p1',
     name: 'Website Revamp',

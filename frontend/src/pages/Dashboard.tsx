@@ -9,9 +9,8 @@ import {
   InProgressIcon,
   OverdueIcon,
 } from '../components/icons';
-import { statusStyles } from '../components/projectStatusStyles';
 import { Stat } from '../types';
-import { projects } from '../data/projects';
+import { projects, mockProjectStatusStyles } from '../data/projects';
 
 const stats: Stat[] = [
   { label: 'Total Employees', value: 18, icon: <UsersIcon size={22} />, accent: 'indigo' as const },
@@ -43,14 +42,14 @@ function Dashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-gray-800">{project.name}</span>
                   <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusStyles[project.status].badge}`}
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${mockProjectStatusStyles[project.status].badge}`}
                   >
                     {project.status}
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${statusStyles[project.status].bar}`}
+                    className={`h-full rounded-full ${mockProjectStatusStyles[project.status].bar}`}
                     style={{ width: `${project.percent}%` }}
                   />
                 </div>
