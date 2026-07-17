@@ -75,7 +75,7 @@ function SingleSelectDropdown({
   };
 
   const selectedName = options.find((option) => option.id === value)?.name;
-  const triggerPadding = compact ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2.5 text-sm';
+  const triggerPadding = compact ? 'px-2 py-1 text-[11px]' : 'px-3.5 py-2.5 text-sm';
 
   return (
     <>
@@ -90,7 +90,7 @@ function SingleSelectDropdown({
           {selectedName ?? placeholder}
         </span>
         <span className="text-gray-400 shrink-0">
-          <ChevronDownIcon size={compact ? 14 : 16} />
+          <ChevronDownIcon size={compact ? 12 : 16} />
         </span>
       </button>
 
