@@ -18,26 +18,19 @@ import { hasProjectManagementPermission, canManageProject } from '../utils/proje
 import { buildPaginationMeta } from '../utils/pagination';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ActivityLogService } from '../utils/activityLogService';
-
-// What `ownerId`/`memberIds` actually look like on a document once
-// populated — IProject itself stays typed as plain ids (that's the real
-// schema shape; authorization code elsewhere depends on comparing raw ids),
-// so this is only used for reading the populated fields back out.
-interface PopulatedUserRef {
-  _id: string;
-  name: string;
-  photoUrl?: string;
-}
+import { PopulatedUserRef } from '../utils/populatedRef';
 
 // Populates owner/members with name+photo just before a response is built —
 // deliberately NOT done inside DetailService.Project itself, since that
 // method is also used for ownership checks elsewhere (canManageProject,
 // isProjectOwner, task authorization) that need raw ids to compare against
-// req.userId. Call this only after any such check has already run.
+// req.userId. Call this only after any such check has already run. Members
+// also get `role` so the frontend can tell Employees apart from Managers
+// (e.g. task-assignee pickers only want Employees).
 const populateOwnerAndMembers = (project: IProject) =>
   (project as unknown as HydratedDocument<IProject>).populate([
     { path: 'ownerId', select: 'name photoUrl' },
-    { path: 'memberIds', select: 'name photoUrl' },
+    { path: 'memberIds', select: 'name photoUrl role' },
   ]);
 
 // Every other endpoint in this API returns `id`, never Mongoose's raw
@@ -56,7 +49,7 @@ const toProjectResponse = (project: IProject) => {
     startDate: project.startDate,
     dueDate: project.dueDate,
     owner: owner ? { id: owner._id, name: owner.name, photoUrl: owner.photoUrl } : undefined,
-    members: members.map((member) => ({ id: member._id, name: member.name, photoUrl: member.photoUrl })),
+    members: members.map((member) => ({ id: member._id, name: member.name, photoUrl: member.photoUrl, role: member.role })),
     status: project.status,
     createdBy: project.createdBy,
     createdAt: project.createdAt,

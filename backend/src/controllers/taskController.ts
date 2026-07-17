@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { HydratedDocument } from 'mongoose';
 import { ControllerHandler } from '../utils/ControllerHandler';
 import { CreateService } from '../services/createService';
 import { DetailService } from '../services/detailService';
@@ -18,23 +19,36 @@ import { canViewTask } from '../utils/taskAccess';
 import { buildPaginationMeta } from '../utils/pagination';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ActivityLogService } from '../utils/activityLogService';
+import { PopulatedUserRef } from '../utils/populatedRef';
 
-const toTaskResponse = (task: ITask) => ({
-  id: task._id,
-  businessId: task.businessId,
-  projectId: task.projectId,
-  title: task.title,
-  description: task.description,
-  assignedTo: task.assignedTo,
-  priority: task.priority,
-  status: task.status,
-  estimatedHours: task.estimatedHours,
-  dueDate: task.dueDate,
-  labels: task.labels,
-  attachments: task.attachments,
-  createdBy: task.createdBy,
-  createdAt: task.createdAt,
-});
+// Populates assignedTo with name+photo just before a response is built —
+// deliberately NOT done inside DetailService.Task itself, since that method
+// is also used for raw-id comparisons elsewhere (canViewTask, the isAssignee
+// check in updateStatus) that need plain ids to compare against req.userId.
+// Call this only after any such check has already run.
+const populateAssignees = (task: ITask) =>
+  (task as unknown as HydratedDocument<ITask>).populate([{ path: 'assignedTo', select: 'name photoUrl' }]);
+
+const toTaskResponse = (task: ITask) => {
+  const assignedTo = (task.assignedTo as unknown as PopulatedUserRef[]) ?? [];
+
+  return {
+    id: task._id,
+    businessId: task.businessId,
+    projectId: task.projectId,
+    title: task.title,
+    description: task.description,
+    assignedTo: assignedTo.map((user) => ({ id: user._id, name: user.name, photoUrl: user.photoUrl })),
+    priority: task.priority,
+    status: task.status,
+    estimatedHours: task.estimatedHours,
+    dueDate: task.dueDate,
+    labels: task.labels,
+    attachments: task.attachments,
+    createdBy: task.createdBy,
+    createdAt: task.createdAt,
+  };
+};
 
 class TaskController extends ControllerHandler {
   private create_service = new CreateService();
@@ -135,6 +149,7 @@ class TaskController extends ControllerHandler {
     });
     await this.logTaskAssignments(req.userId!, task, assignees);
 
+    await populateAssignees(task);
     this.jsonResponse(res, toTaskResponse(task));
   });
 
@@ -175,6 +190,7 @@ class TaskController extends ControllerHandler {
       return;
     }
 
+    await populateAssignees(task);
     this.jsonResponse(res, toTaskResponse(task));
   });
 
@@ -230,6 +246,7 @@ class TaskController extends ControllerHandler {
       await this.logTaskAssignments(req.userId!, updated, newlyAssignedUsers);
     }
 
+    await populateAssignees(updated);
     this.jsonResponse(res, toTaskResponse(updated));
   });
 
@@ -283,6 +300,7 @@ class TaskController extends ControllerHandler {
       action,
     });
 
+    await populateAssignees(updated);
     this.jsonResponse(res, toTaskResponse(updated));
   });
 

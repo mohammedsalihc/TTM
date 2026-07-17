@@ -50,13 +50,15 @@ export class ListService {
     // Populated so the response can embed owner/member name+photo directly
     // (see projectController's toProjectResponse) instead of the frontend
     // having to resolve raw ids against separate employee/manager lists.
+    // Members also get `role` so the frontend can tell Employees apart from
+    // Managers (e.g. task-assignee pickers only want Employees).
     const [data, total] = await Promise.all([
       ProjectModel.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('ownerId', 'name photoUrl')
-        .populate('memberIds', 'name photoUrl'),
+        .populate('memberIds', 'name photoUrl role'),
       ProjectModel.countDocuments(query),
     ]);
 
@@ -75,8 +77,10 @@ export class ListService {
 
     const skip = (page - 1) * limit;
 
+    // Populated so the response can embed assignee name+photo directly (see
+    // taskController's toTaskResponse), same reasoning as Project above.
     const [data, total] = await Promise.all([
-      TaskModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      TaskModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('assignedTo', 'name photoUrl'),
       TaskModel.countDocuments(query),
     ]);
 
