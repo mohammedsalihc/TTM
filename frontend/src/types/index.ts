@@ -7,3 +7,4 @@ export * from './employee';
 export * from './manager';
 export * from './profile';
 export * from './pagination';
+export * from './task';

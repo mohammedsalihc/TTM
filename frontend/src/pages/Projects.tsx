@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import ProjectCard from '../components/ProjectCard';
-import AddProjectModal from '../components/AddProjectModal';
+import ProjectFormModal from '../components/ProjectFormModal';
 import Spinner from '../components/Spinner';
 import { SearchIcon } from '../components/icons';
 import {
@@ -18,6 +19,7 @@ const SEARCH_DEBOUNCE_MS = 400;
 const EMPTY_PAGINATION: PaginationMeta = { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 };
 
 function Projects() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
@@ -93,7 +95,7 @@ function Projects() {
     return () => observer.disconnect();
   }, [hasMore, handleLoadMore]);
 
-  const handleCreated = () => {
+  const handleSaved = () => {
     setIsModalOpen(false);
     // New projects sort newest-first, so a fresh page-1 load surfaces it.
     fetchFirstPage();
@@ -158,7 +160,12 @@ function Projects() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} onDelete={handleDelete} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onView={(p) => navigate(`/projects/${p.id}`)}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
@@ -174,7 +181,7 @@ function Projects() {
         </div>
       )}
 
-      <AddProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={handleCreated} />
+      <ProjectFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSaved={handleSaved} />
     </DashboardLayout>
   );
 }

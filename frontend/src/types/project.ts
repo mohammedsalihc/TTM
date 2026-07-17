@@ -7,11 +7,14 @@ export type ProjectStatus = 'active' | 'on-hold' | 'completed' | 'cancelled';
 // A user reference embedded directly in a Project response — the backend
 // populates ownerId/memberIds (Mongoose .populate()) before responding, so
 // the frontend never has to resolve raw ids against a separate
-// employees/managers list just to show a name.
+// employees/managers list just to show a name. `role` is only populated for
+// members (used to tell Employees apart from Managers, e.g. task-assignee
+// pickers only want Employees) — the owner ref never has it set.
 export interface ProjectPersonRef {
   id: string;
   name: string;
   photoUrl?: string;
+  role?: 'admin' | 'manager' | 'employee';
 }
 
 // Matches backend/src/controllers/projectController.ts's toProjectResponse.

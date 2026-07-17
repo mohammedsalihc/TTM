@@ -3,18 +3,32 @@ import Modal from './Modal';
 import Spinner from './Spinner';
 import DatePicker from './DatePicker';
 import MultiSelectDropdown from './MultiSelectDropdown';
-import SingleSelectDropdown from './SingleSelectDropdown';
-import { createProjectRequest } from '../services/projectService';
+import SingleSelectDropdown, { SelectOption } from './SingleSelectDropdown';
+import { createProjectRequest, updateProjectRequest } from '../services/projectService';
 import { usePeopleDirectory } from '../hooks/usePeopleDirectory';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
+import { Project, ProjectStatus } from '../types';
 
-interface AddProjectModalProps {
+interface ProjectFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
+  // Presence of `project` switches this into edit mode: fields pre-fill
+  // from it, a Status field appears, and submit calls update instead of
+  // create. Same dual-purpose shape as ProfileModal (view/edit in one
+  // component) rather than a separate near-duplicate EditProjectModal.
+  project?: Project;
 }
 
-function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
+const STATUS_OPTIONS: SelectOption[] = [
+  { id: 'active', name: 'Active' },
+  { id: 'on-hold', name: 'On Hold' },
+  { id: 'completed', name: 'Completed' },
+  { id: 'cancelled', name: 'Cancelled' },
+];
+
+function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModalProps) {
+  const isEditMode = !!project;
   // Mounted unconditionally by the parent page (so its close transition can
   // play, same as AddPersonModal) — gate the directory fetch behind isOpen.
   const { managers, employees } = usePeopleDirectory(isOpen);
@@ -25,21 +39,23 @@ function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
   const [dueDate, setDueDate] = useState('');
   const [managerId, setManagerId] = useState('');
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
+  const [status, setStatus] = useState<ProjectStatus>('active');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setName('');
-      setDescription('');
-      setStartDate('');
-      setDueDate('');
-      setManagerId('');
-      setEmployeeIds([]);
+      setName(project?.name ?? '');
+      setDescription(project?.description ?? '');
+      setStartDate(project?.startDate ? project.startDate.slice(0, 10) : '');
+      setDueDate(project?.dueDate ? project.dueDate.slice(0, 10) : '');
+      setManagerId(project?.owner?.id ?? '');
+      setEmployeeIds(project?.members.map((member) => member.id) ?? []);
+      setStatus(project?.status ?? 'active');
       setError('');
       setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [isOpen, project]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,24 +70,36 @@ function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
     try {
       // The project's owner (backend field) is always the assigned Manager
       // here — there's no separate "Owner" concept exposed in this form.
-      await createProjectRequest({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        startDate: startDate || undefined,
-        dueDate: dueDate || undefined,
-        ownerId: managerId,
-        memberIds: employeeIds,
-      });
-      onCreated();
+      if (isEditMode && project) {
+        await updateProjectRequest(project.id, {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          startDate: startDate || undefined,
+          dueDate: dueDate || undefined,
+          ownerId: managerId,
+          memberIds: employeeIds,
+          status,
+        });
+      } else {
+        await createProjectRequest({
+          name: name.trim(),
+          description: description.trim() || undefined,
+          startDate: startDate || undefined,
+          dueDate: dueDate || undefined,
+          ownerId: managerId,
+          memberIds: employeeIds,
+        });
+      }
+      onSaved();
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Unable to add project. Please try again.'));
+      setError(getApiErrorMessage(err, `Unable to ${isEditMode ? 'save' : 'add'} project. Please try again.`));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Project" maxWidthClassName="max-w-lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? 'Edit Project' : 'Add Project'} maxWidthClassName="max-w-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -147,6 +175,20 @@ function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
           />
         </div>
 
+        {isEditMode && (
+          <div>
+            <label htmlFor="project-status" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Status
+            </label>
+            <SingleSelectDropdown
+              id="project-status"
+              options={STATUS_OPTIONS}
+              value={status}
+              onChange={(value) => setStatus(value as ProjectStatus)}
+            />
+          </div>
+        )}
+
         {error && (
           <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
             {error}
@@ -168,7 +210,7 @@ function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
             className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-500 active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isSubmitting && <Spinner size={16} />}
-            {isSubmitting ? 'Adding...' : 'Add Project'}
+            {isSubmitting ? (isEditMode ? 'Saving...' : 'Adding...') : isEditMode ? 'Save Changes' : 'Add Project'}
           </button>
         </div>
       </form>
@@ -176,4 +218,4 @@ function AddProjectModal({ isOpen, onClose, onCreated }: AddProjectModalProps) {
   );
 }
 
-export default AddProjectModal;
+export default ProjectFormModal;
