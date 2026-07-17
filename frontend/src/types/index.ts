@@ -8,3 +8,4 @@ export * from './manager';
 export * from './profile';
 export * from './pagination';
 export * from './task';
+export * from './comment';

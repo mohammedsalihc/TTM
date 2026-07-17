@@ -11,17 +11,6 @@ export enum TaskStatus {
   Completed = 'completed',
 }
 
-// Embedded subdocument, not a separate collection — attachments are few
-// per task, so there's no need for their own pagination/queries.
-export interface ITaskAttachment {
-  _id?: string;
-  url: string;
-  fileName: string;
-  fileType: string; // raw mimetype (e.g. "image/png", "application/pdf")
-  uploadedBy: string; // ref User
-  uploadedAt?: Date;
-}
-
 // Plain data shape — decoupled from mongoose.Document (merged in at the
 // model<T>() call site instead), same convention as Project/User/Business.
 export interface ITask {
@@ -36,7 +25,6 @@ export interface ITask {
   estimatedHours?: number;
   dueDate?: Date;
   labels?: string[];
-  attachments?: ITaskAttachment[];
   createdBy: string; // ref User — who actually created the record
   createdAt?: Date;
 }

@@ -97,7 +97,7 @@ export class ListService {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
-      CommentModel.find(query).sort({ createdAt: 1 }).skip(skip).limit(limit),
+      CommentModel.find(query).sort({ createdAt: 1 }).skip(skip).limit(limit).populate('authorId', 'name photoUrl'),
       CommentModel.countDocuments(query),
     ]);
 

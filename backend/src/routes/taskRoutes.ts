@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import taskController from '../controllers/taskController';
 import commentController from '../controllers/commentController';
-import attachmentController from '../controllers/attachmentController';
 import { requireAuth } from '../middleware/authMiddleware';
-import { uploadTaskAttachment } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -20,7 +18,5 @@ router.patch('/:id/status', taskController.updateStatus);
 router.delete('/:id', taskController.remove);
 router.post('/:taskId/comments', commentController.create);
 router.get('/:taskId/comments', commentController.list);
-router.post('/:taskId/attachments', uploadTaskAttachment, attachmentController.create);
-router.delete('/:taskId/attachments/:attachmentId', attachmentController.remove);
 
 export default router;

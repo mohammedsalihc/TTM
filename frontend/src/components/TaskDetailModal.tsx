@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import Modal from './Modal';
 import Spinner from './Spinner';
 import Avatar from './Avatar';
+import TaskComments from './TaskComments';
 import DatePicker from './DatePicker';
 import MultiSelectDropdown, { MultiSelectOption } from './MultiSelectDropdown';
 import SingleSelectDropdown, { SelectOption } from './SingleSelectDropdown';
@@ -336,6 +337,8 @@ function TaskDetailModal({
               <p className="text-sm text-gray-400">No one assigned</p>
             )}
           </div>
+
+          <TaskComments taskId={task.id} />
 
           {error && (
             <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">

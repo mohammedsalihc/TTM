@@ -3,15 +3,6 @@ import { ProjectPersonRef } from './project';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 export type TaskStatus = 'todo' | 'in-progress' | 'completed';
 
-export interface TaskAttachment {
-  id: string;
-  url: string;
-  fileName: string;
-  fileType: string;
-  uploadedBy: string;
-  uploadedAt: string;
-}
-
 // Matches backend/src/controllers/taskController.ts's toTaskResponse.
 // assignedTo is populated (name+photo) same as Project's owner/members.
 export interface Task {
@@ -26,7 +17,6 @@ export interface Task {
   estimatedHours?: number;
   dueDate?: string;
   labels: string[];
-  attachments: TaskAttachment[];
   createdBy: string;
   createdAt: string;
 }

@@ -12,7 +12,6 @@ const error_code = {
   project: '106',
   task: '107',
   comment: '108',
-  attachment: '109',
   notification: '110',
 };
 
@@ -72,14 +71,6 @@ export const error_message: Record<string, IErrorCode> = {
   invalid_task_assignee: {
     message: 'Assignees must be employees in your business',
     code: `${error_code.task}_400`,
-  },
-  attachment_required: {
-    message: 'Please select a file to upload',
-    code: `${error_code.attachment}_400`,
-  },
-  attachment_not_found: {
-    message: 'Attachment not found',
-    code: `${error_code.attachment}_404`,
   },
   notification_not_found: {
     message: 'Notification not found',

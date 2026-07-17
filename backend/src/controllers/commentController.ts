@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { HydratedDocument } from 'mongoose';
 import { ControllerHandler } from '../utils/ControllerHandler';
 import { CreateService } from '../services/createService';
 import { DetailService } from '../services/detailService';
@@ -9,14 +10,25 @@ import { createCommentSchema, listCommentsQuerySchema } from '../validators/comm
 import { canViewTask } from '../utils/taskAccess';
 import { buildPaginationMeta } from '../utils/pagination';
 import { asyncHandler } from '../utils/asyncHandler';
+import { PopulatedUserRef } from '../utils/populatedRef';
 
-const toCommentResponse = (comment: IComment) => ({
-  id: comment._id,
-  taskId: comment.taskId,
-  authorId: comment.authorId,
-  text: comment.text,
-  createdAt: comment.createdAt,
-});
+// Populates authorId with name+photo just before a response is built — see
+// projectController/taskController for the same pattern. Safe to do
+// unconditionally here (unlike Project/Task) since nothing in this
+// controller ever compares comment.authorId against a raw id.
+const populateAuthor = (comment: IComment) =>
+  (comment as unknown as HydratedDocument<IComment>).populate([{ path: 'authorId', select: 'name photoUrl' }]);
+
+const toCommentResponse = (comment: IComment) => {
+  const author = comment.authorId as unknown as PopulatedUserRef;
+  return {
+    id: comment._id,
+    taskId: comment.taskId,
+    author: author ? { id: author._id, name: author.name, photoUrl: author.photoUrl } : undefined,
+    text: comment.text,
+    createdAt: comment.createdAt,
+  };
+};
 
 class CommentController extends ControllerHandler {
   private create_service = new CreateService();
@@ -52,6 +64,7 @@ class CommentController extends ControllerHandler {
       text: parsed.text,
     });
 
+    await populateAuthor(comment);
     this.jsonResponse(res, toCommentResponse(comment));
   });
 

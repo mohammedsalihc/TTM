@@ -43,9 +43,3 @@ export const uploadSingleImage = createSingleFileUploader(
   (mimetype) => mimetype.startsWith('image/'),
   'Only image files are allowed',
 );
-
-export const uploadTaskAttachment = createSingleFileUploader(
-  'file',
-  (mimetype) => mimetype.startsWith('image/') || mimetype === 'application/pdf',
-  'Only image or PDF files are allowed',
-);
