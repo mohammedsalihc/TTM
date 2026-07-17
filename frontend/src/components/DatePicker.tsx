@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarIcon } from './icons';
+import { computePopoverPosition, PopoverCoords } from '../utils/popoverPosition';
 
 interface DatePickerProps {
   id?: string;
@@ -16,7 +17,10 @@ const MONTHS = [
 ];
 
 const POPOVER_WIDTH = 288; // matches w-72
-const VIEWPORT_MARGIN = 8;
+// Worst case: header + weekday row + a 6-row month + the "Clear date" row,
+// at p-5 padding — used to decide whether to flip the popover above the
+// trigger instead of measuring after render.
+const ESTIMATED_POPOVER_HEIGHT = 420;
 
 const toIso = (date: Date): string => {
   const year = date.getFullYear();
@@ -51,7 +55,7 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
   const [isOpen, setIsOpen] = useState(false);
   const selected = parseIso(value);
   const [viewDate, setViewDate] = useState(() => selected ?? new Date());
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0, width: POPOVER_WIDTH });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -77,14 +81,7 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
     setViewDate(selected ?? new Date());
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
-      // Flip to hang from the trigger's right edge instead of its left if
-      // opening leftward would otherwise push the popover past the
-      // viewport's right edge.
-      const left =
-        rect.left + POPOVER_WIDTH > window.innerWidth - VIEWPORT_MARGIN
-          ? rect.right - POPOVER_WIDTH
-          : rect.left;
-      setCoords({ top: rect.bottom + 8, left: Math.max(VIEWPORT_MARGIN, left) });
+      setCoords(computePopoverPosition(rect, ESTIMATED_POPOVER_HEIGHT, POPOVER_WIDTH));
     }
     setIsOpen(true);
   };
@@ -130,7 +127,7 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
         createPortal(
           <div
             ref={popoverRef}
-            style={{ position: 'fixed', top: coords.top, left: coords.left, width: POPOVER_WIDTH }}
+            style={{ position: 'fixed', top: coords.top, left: coords.left, width: coords.width }}
             className="z-[60] bg-white rounded-2xl border border-gray-100 shadow-xl p-5"
           >
             <div className="flex items-center justify-between mb-4">

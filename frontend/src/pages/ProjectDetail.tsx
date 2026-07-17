@@ -127,63 +127,66 @@ function ProjectDetail() {
         <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1.5">
-              <h2 className="text-2xl font-semibold text-gray-900">{project.name}</h2>
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${badge}`}>{label}</span>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3.5 mb-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-lg font-semibold text-gray-900 truncate">{project.name}</h2>
+              <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${badge}`}>{label}</span>
             </div>
-            <p className="text-sm text-gray-500">{project.description || 'No description yet.'}</p>
+            {project.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{project.description}</p>}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
+              <span className="text-gray-500">
+                Manager: <span className="font-medium text-gray-800">{project.owner?.name ?? '—'}</span>
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500">Members:</span>
+                {project.members.length > 0 ? (
+                  <div className="flex items-center -space-x-1.5">
+                    {project.members.map((member) => (
+                      <Avatar
+                        key={member.id}
+                        name={member.name}
+                        color={colorFromString(member.name)}
+                        imageUrl={member.photoUrl}
+                        size={20}
+                        className="ring-2 ring-white"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-gray-400">None</span>
+                )}
+              </div>
+
+              {(project.startDate || project.dueDate) && (
+                <span className="text-gray-400">
+                  {project.startDate ? formatDate(project.startDate) : '—'} &rarr;{' '}
+                  {project.dueDate ? formatDate(project.dueDate) : '—'}
+                </span>
+              )}
+            </div>
           </div>
           {canManageProject && (
             <div className="flex gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}
-                className="bg-white text-gray-700 border border-gray-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                className="bg-white text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 transition-colors"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={handleDeleteProject}
-                className="bg-white text-red-600 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-50 transition-colors"
+                className="bg-white text-red-600 border border-red-200 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-red-50 transition-colors"
               >
                 Delete
               </button>
             </div>
           )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Manager</p>
-            <p className="text-sm font-medium text-gray-800">{project.owner?.name ?? '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Dates</p>
-            <p className="text-sm font-medium text-gray-800">
-              {project.startDate ? formatDate(project.startDate) : '—'} &rarr;{' '}
-              {project.dueDate ? formatDate(project.dueDate) : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Members</p>
-            <div className="flex items-center -space-x-2">
-              {project.members.map((member) => (
-                <Avatar
-                  key={member.id}
-                  name={member.name}
-                  color={colorFromString(member.name)}
-                  imageUrl={member.photoUrl}
-                  size={28}
-                  className="ring-2 ring-white"
-                />
-              ))}
-              {project.members.length === 0 && <span className="text-sm text-gray-400">No members</span>}
-            </div>
-          </div>
         </div>
       </div>
 

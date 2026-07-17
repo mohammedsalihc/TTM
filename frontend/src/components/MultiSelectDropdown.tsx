@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDownIcon } from './icons';
+import { computePopoverPosition, estimateListPopoverHeight, PopoverCoords } from '../utils/popoverPosition';
 
 export interface MultiSelectOption {
   id: string;
@@ -17,7 +18,6 @@ interface MultiSelectDropdownProps {
 }
 
 const MIN_POPOVER_WIDTH = 280;
-const VIEWPORT_MARGIN = 8;
 
 // Same portal + fixed-position pattern as DatePicker — this form lives
 // inside Modal's scrollable content area, so a plain `position: absolute`
@@ -32,7 +32,7 @@ function MultiSelectDropdown({
   emptyMessage = 'No options yet',
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0, width: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -58,9 +58,7 @@ function MultiSelectDropdown({
     if (!isOpen) {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (rect) {
-        const width = Math.max(rect.width, MIN_POPOVER_WIDTH);
-        const left = rect.left + width > window.innerWidth - VIEWPORT_MARGIN ? rect.right - width : rect.left;
-        setCoords({ top: rect.bottom + 8, left: Math.max(VIEWPORT_MARGIN, left), width });
+        setCoords(computePopoverPosition(rect, estimateListPopoverHeight(options.length), MIN_POPOVER_WIDTH));
       }
     }
     setIsOpen((prev) => !prev);

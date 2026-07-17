@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDownIcon } from './icons';
+import { computePopoverPosition, estimateListPopoverHeight, PopoverCoords } from '../utils/popoverPosition';
 
 export interface SelectOption {
   id: string;
@@ -14,10 +15,13 @@ interface SingleSelectDropdownProps {
   onChange: (id: string) => void;
   placeholder?: string;
   emptyMessage?: string;
+  // Smaller trigger sizing for space-constrained contexts (e.g. a status
+  // control on a task board card) — same component/behavior, just less
+  // visual weight than the standard form-field sizing.
+  compact?: boolean;
 }
 
 const MIN_POPOVER_WIDTH = 280;
-const VIEWPORT_MARGIN = 8;
 
 // Same portal + fixed-position + visual language as DatePicker and
 // MultiSelectDropdown — a plain native <select> looks out of place next to
@@ -30,9 +34,10 @@ function SingleSelectDropdown({
   onChange,
   placeholder = 'Select',
   emptyMessage = 'No options yet',
+  compact = false,
 }: SingleSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0, width: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -58,9 +63,7 @@ function SingleSelectDropdown({
     if (!isOpen) {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (rect) {
-        const width = Math.max(rect.width, MIN_POPOVER_WIDTH);
-        const left = rect.left + width > window.innerWidth - VIEWPORT_MARGIN ? rect.right - width : rect.left;
-        setCoords({ top: rect.bottom + 8, left: Math.max(VIEWPORT_MARGIN, left), width });
+        setCoords(computePopoverPosition(rect, estimateListPopoverHeight(options.length), MIN_POPOVER_WIDTH));
       }
     }
     setIsOpen((prev) => !prev);
@@ -72,6 +75,7 @@ function SingleSelectDropdown({
   };
 
   const selectedName = options.find((option) => option.id === value)?.name;
+  const triggerPadding = compact ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2.5 text-sm';
 
   return (
     <>
@@ -80,13 +84,13 @@ function SingleSelectDropdown({
         type="button"
         id={id}
         onClick={toggleOpen}
-        className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+        className={`w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition ${triggerPadding}`}
       >
         <span className={`truncate ${selectedName ? 'text-gray-900' : 'text-gray-400'}`}>
           {selectedName ?? placeholder}
         </span>
         <span className="text-gray-400 shrink-0">
-          <ChevronDownIcon size={16} />
+          <ChevronDownIcon size={compact ? 14 : 16} />
         </span>
       </button>
 

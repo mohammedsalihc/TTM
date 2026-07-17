@@ -13,7 +13,7 @@ function TaskColumn({ title, count, children }: TaskColumnProps) {
         <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
         <span className="text-xs text-gray-400 bg-white rounded-full px-2 py-0.5 border border-gray-100">{count}</span>
       </div>
-      <div className="flex flex-col gap-3">{count === 0 ? <EmptyState /> : children}</div>
+      <div className="flex flex-col gap-2">{count === 0 ? <EmptyState /> : children}</div>
     </div>
   );
 }
