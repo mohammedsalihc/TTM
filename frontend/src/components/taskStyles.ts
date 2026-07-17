@@ -1,9 +1,9 @@
 import { TaskPriority, TaskStatus } from '../types';
 
-export const taskStatusStyles: Record<TaskStatus, { label: string }> = {
-  todo: { label: 'To Do' },
-  'in-progress': { label: 'In Progress' },
-  completed: { label: 'Completed' },
+export const taskStatusStyles: Record<TaskStatus, { badge: string; label: string }> = {
+  todo: { badge: 'bg-gray-100 text-gray-600', label: 'To Do' },
+  'in-progress': { badge: 'bg-amber-50 text-amber-600', label: 'In Progress' },
+  completed: { badge: 'bg-emerald-50 text-emerald-600', label: 'Completed' },
 };
 
 export const taskPriorityStyles: Record<TaskPriority, { badge: string; label: string }> = {

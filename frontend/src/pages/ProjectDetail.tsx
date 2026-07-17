@@ -6,6 +6,7 @@ import Spinner from '../components/Spinner';
 import TaskColumn from '../components/TaskColumn';
 import TaskCard from '../components/TaskCard';
 import AddTaskModal from '../components/AddTaskModal';
+import TaskDetailModal from '../components/TaskDetailModal';
 import ProjectFormModal from '../components/ProjectFormModal';
 import { ChevronLeftIcon } from '../components/icons';
 import { statusStyles } from '../components/projectStatusStyles';
@@ -35,6 +36,7 @@ function ProjectDetail() {
   const [error, setError] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const fetchProject = useCallback(async () => {
     if (!id) return;
@@ -212,6 +214,7 @@ function ProjectDetail() {
                 <TaskCard
                   key={task.id}
                   task={task}
+                  onClick={setSelectedTask}
                   canChangeStatus={canChangeTaskStatus(task)}
                   onStatusChange={(status) => handleTaskStatusChange(task.id, status)}
                 />
@@ -239,6 +242,23 @@ function ProjectDetail() {
           fetchTasks();
         }}
         projectId={project.id}
+        employeeOptions={employeeOptions}
+      />
+
+      <TaskDetailModal
+        isOpen={selectedTask !== null}
+        onClose={() => setSelectedTask(null)}
+        task={selectedTask}
+        onUpdated={(updated) => {
+          setTasks((prev) => prev.map((task) => (task.id === updated.id ? updated : task)));
+          setSelectedTask(updated);
+        }}
+        onDeleted={(taskId) => {
+          setTasks((prev) => prev.filter((task) => task.id !== taskId));
+          setSelectedTask(null);
+        }}
+        canEdit={canManageProject}
+        canChangeStatus={selectedTask ? canChangeTaskStatus(selectedTask) : false}
         employeeOptions={employeeOptions}
       />
     </DashboardLayout>
