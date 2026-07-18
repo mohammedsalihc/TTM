@@ -8,6 +8,7 @@ import projectRoutes from '../../routes/projectRoutes';
 import taskRoutes from '../../routes/taskRoutes';
 import notificationRoutes from '../../routes/notificationRoutes';
 import uploadRoutes from '../../routes/uploadRoutes';
+import dashboardRoutes from '../../routes/dashboardRoutes';
 import { controllerHandler } from '../../utils/ControllerHandler';
 
 const app: Application = express();
@@ -27,6 +28,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Every other route returns the app's JSON error shape ({status, message,
 // error_message_code}) — without this, an unmatched path falls through to

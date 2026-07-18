@@ -21,6 +21,7 @@ const toEmployeeResponse = (user: IUser) => ({
   businessId: user.businessId,
   designation: user.designation,
   photoUrl: user.photoUrl,
+  createdAt: user.createdAt,
 });
 
 class EmployeeController extends ControllerHandler {

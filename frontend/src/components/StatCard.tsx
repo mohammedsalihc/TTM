@@ -13,7 +13,7 @@ function StatCard({ label, value, icon, accent = 'indigo' }: Stat) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bg} ${text}`}>
         {icon}
       </div>
       <div className="min-w-0">

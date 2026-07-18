@@ -1,30 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import DashboardLayout from '../components/DashboardLayout';
 import StatCard from '../components/StatCard';
-import ProjectCard from '../components/ProjectCard';
 import Spinner from '../components/Spinner';
-import {
-  UsersIcon,
-  ManagersIcon,
-  ProjectsIcon,
-  TasksIcon,
-  CompletedIcon,
-  InProgressIcon,
-} from '../components/icons';
-import { listEmployeesRequest } from '../services/employeeService';
-import { listManagersRequest } from '../services/managerService';
-import { listProjectsRequest } from '../services/projectService';
-import { listTasksRequest } from '../services/taskService';
+import { UsersIcon, ManagersIcon, ProjectsIcon, TasksIcon } from '../components/icons';
+import { getDashboardStatsRequest, getDashboardChartsRequest, DashboardMonthlyBucket } from '../services/dashboardService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
-import { Project, Stat } from '../types';
+import { Stat } from '../types';
 
-const RECENT_PROJECTS_LIMIT = 4;
+const MONTHS_TO_SHOW = 6;
 
 function Dashboard() {
-  const navigate = useNavigate();
   const [stats, setStats] = useState<Stat[] | null>(null);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [months, setMonths] = useState<DashboardMonthlyBucket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -32,25 +20,16 @@ function Dashboard() {
     let cancelled = false;
     setIsLoading(true);
     setError('');
-    Promise.all([
-      listEmployeesRequest({ page: 1, limit: 1 }),
-      listManagersRequest({ page: 1, limit: 1 }),
-      listProjectsRequest({ page: 1, limit: RECENT_PROJECTS_LIMIT }),
-      listTasksRequest({ page: 1, limit: 1 }),
-      listTasksRequest({ page: 1, limit: 1, status: 'completed' }),
-      listTasksRequest({ page: 1, limit: 1, status: 'in-progress' }),
-    ])
-      .then(([employeesRes, managersRes, projectsRes, tasksRes, completedRes, inProgressRes]) => {
+    Promise.all([getDashboardStatsRequest(), getDashboardChartsRequest(MONTHS_TO_SHOW)])
+      .then(([statsRes, chartsRes]) => {
         if (cancelled) return;
         setStats([
-          { label: 'Total Employees', value: employeesRes.pagination.total, icon: <UsersIcon size={22} />, accent: 'indigo' },
-          { label: 'Total Managers', value: managersRes.pagination.total, icon: <ManagersIcon size={22} />, accent: 'indigo' },
-          { label: 'Total Projects', value: projectsRes.pagination.total, icon: <ProjectsIcon size={22} />, accent: 'gray' },
-          { label: 'Total Tasks', value: tasksRes.pagination.total, icon: <TasksIcon size={22} />, accent: 'gray' },
-          { label: 'Completed', value: completedRes.pagination.total, icon: <CompletedIcon size={22} />, accent: 'green' },
-          { label: 'In Progress', value: inProgressRes.pagination.total, icon: <InProgressIcon size={22} />, accent: 'amber' },
+          { label: 'Total Employees', value: statsRes.totalEmployees, icon: <UsersIcon size={24} />, accent: 'indigo' },
+          { label: 'Total Managers', value: statsRes.totalManagers, icon: <ManagersIcon size={24} />, accent: 'indigo' },
+          { label: 'Total Projects', value: statsRes.totalProjects, icon: <ProjectsIcon size={24} />, accent: 'gray' },
+          { label: 'Total Tasks', value: statsRes.totalTasks, icon: <TasksIcon size={24} />, accent: 'gray' },
         ]);
-        setRecentProjects(projectsRes.data);
+        setMonths(chartsRes.months);
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err, 'Unable to load dashboard data.'));
@@ -79,23 +58,91 @@ function Dashboard() {
           </div>
         ) : (
           <>
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {(stats ?? []).map((stat) => (
                 <StatCard key={stat.label} {...stat} />
               ))}
             </section>
 
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-5">Recent Projects</h3>
-              {recentProjects.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No projects yet</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {recentProjects.map((project) => (
-                    <ProjectCard key={project.id} project={project} onView={(p) => navigate(`/projects/${p.id}`)} />
-                  ))}
-                </div>
-              )}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Team Growth</h3>
+                <p className="text-sm text-gray-500 mb-4">Employees vs. managers added over the last {MONTHS_TO_SHOW} months</p>
+                <ResponsiveContainer width="100%" height={320}>
+                  <AreaChart data={months} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="employeesArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0.02} />
+                      </linearGradient>
+                      <linearGradient id="managersArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="#EEF0F3" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
+                    <Tooltip
+                      cursor={{ stroke: '#E5E7EB', strokeDasharray: '4 4' }}
+                      contentStyle={{ borderRadius: 12, border: '1px solid #F3F4F6', fontSize: 13 }}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 13 }} />
+                    <Area
+                      type="linear"
+                      dataKey="employees"
+                      name="Employees"
+                      stroke="#6366F1"
+                      strokeWidth={2}
+                      fill="url(#employeesArea)"
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0 }}
+                    />
+                    <Area
+                      type="linear"
+                      dataKey="managers"
+                      name="Managers"
+                      stroke="#F59E0B"
+                      strokeWidth={2}
+                      fill="url(#managersArea)"
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Projects Created</h3>
+                <p className="text-sm text-gray-500 mb-4">New projects over the last {MONTHS_TO_SHOW} months</p>
+                <ResponsiveContainer width="100%" height={320}>
+                  <AreaChart data={months} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="projectsArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="#EEF0F3" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
+                    <Tooltip
+                      cursor={{ stroke: '#E5E7EB', strokeDasharray: '4 4' }}
+                      contentStyle={{ borderRadius: 12, border: '1px solid #F3F4F6', fontSize: 13 }}
+                    />
+                    <Area
+                      type="linear"
+                      dataKey="projects"
+                      name="Projects"
+                      stroke="#6366F1"
+                      strokeWidth={2}
+                      fill="url(#projectsArea)"
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </section>
           </>
         )}

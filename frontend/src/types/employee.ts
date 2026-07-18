@@ -8,6 +8,7 @@ export interface Employee {
   businessId: string;
   designation?: string;
   photoUrl?: string;
+  createdAt: string;
 }
 
 export interface CreateEmployeePayload {
