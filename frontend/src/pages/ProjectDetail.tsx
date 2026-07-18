@@ -8,6 +8,7 @@ import TaskCard from '../components/TaskCard';
 import AddTaskModal from '../components/AddTaskModal';
 import TaskDetailModal from '../components/TaskDetailModal';
 import ProjectFormModal from '../components/ProjectFormModal';
+import ProjectActivity from '../components/ProjectActivity';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { ChevronLeftIcon, SearchIcon, SettingsIcon, PlusIcon } from '../components/icons';
 import { getProjectRequest, updateProjectRequest, deleteProjectRequest } from '../services/projectService';
@@ -39,6 +40,7 @@ function ProjectDetail() {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'board' | 'activity'>('board');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -245,49 +247,78 @@ function ProjectDetail() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400" aria-hidden="true">
-            <SearchIcon size={14} />
-          </span>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search tasks..."
-            aria-label="Search tasks"
-            className="w-52 rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-          />
-        </div>
-        {canManageProject && (
-          <button
-            type="button"
-            onClick={() => setIsAddTaskModalOpen(true)}
-            className="bg-indigo-600 text-white text-sm font-semibold rounded-lg px-4 py-2.5 shadow-sm hover:bg-indigo-500 transition-colors"
-          >
-            + New Task
-          </button>
-        )}
+      <div className="flex items-center gap-1 border-b border-gray-100 mb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab('board')}
+          className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            activeTab === 'board' ? 'text-indigo-600 border-indigo-600' : 'text-gray-400 border-transparent hover:text-gray-600'
+          }`}
+        >
+          Board
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('activity')}
+          className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            activeTab === 'activity' ? 'text-indigo-600 border-indigo-600' : 'text-gray-400 border-transparent hover:text-gray-600'
+          }`}
+        >
+          Activity
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {BOARD_COLUMNS.map((column) => {
-          const columnTasks = filteredTasks.filter((task) => task.status === column.status);
-          return (
-            <TaskColumn key={column.status} status={column.status} title={column.title} count={columnTasks.length}>
-              {columnTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={setSelectedTask}
-                  canChangeStatus={canChangeTaskStatus(task)}
-                  onStatusChange={(status) => handleTaskStatusChange(task.id, status)}
-                />
-              ))}
-            </TaskColumn>
-          );
-        })}
-      </div>
+      {activeTab === 'board' ? (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400" aria-hidden="true">
+                <SearchIcon size={14} />
+              </span>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search tasks..."
+                aria-label="Search tasks"
+                className="w-52 rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              />
+            </div>
+            {canManageProject && (
+              <button
+                type="button"
+                onClick={() => setIsAddTaskModalOpen(true)}
+                className="bg-indigo-600 text-white text-sm font-semibold rounded-lg px-4 py-2.5 shadow-sm hover:bg-indigo-500 transition-colors"
+              >
+                + New Task
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {BOARD_COLUMNS.map((column) => {
+              const columnTasks = filteredTasks.filter((task) => task.status === column.status);
+              return (
+                <TaskColumn key={column.status} status={column.status} title={column.title} count={columnTasks.length}>
+                  {columnTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onClick={setSelectedTask}
+                      canChangeStatus={canChangeTaskStatus(task)}
+                      onStatusChange={(status) => handleTaskStatusChange(task.id, status)}
+                    />
+                  ))}
+                </TaskColumn>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6">
+          <ProjectActivity projectId={project.id} />
+        </div>
+      )}
 
       <ProjectFormModal
         isOpen={isEditModalOpen}
