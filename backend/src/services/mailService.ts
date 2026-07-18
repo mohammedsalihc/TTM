@@ -1,6 +1,7 @@
 import { brevoClient } from '../configs/brevo';
 import { renderTemplate } from '../utils/renderTemplate';
 import { welcomeTeamMemberEmailTemplate } from '../templates/welcomeTeamMemberEmail';
+import { resetPasswordEmailTemplate } from '../templates/resetPasswordEmail';
 
 interface SendMailParams {
   to: string;
@@ -14,6 +15,12 @@ interface WelcomeEmailParams {
   recipientName: string;
   designation: string;
   password: string;
+}
+
+interface PasswordResetEmailParams {
+  to: string;
+  recipientName: string;
+  resetUrl: string;
 }
 
 export class MailService {
@@ -39,5 +46,14 @@ export class MailService {
       currentYear: new Date().getFullYear().toString(),
     });
     await this.send({ to, subject: `Welcome to ${businessName ?? 'TTM'}`, html });
+  };
+
+  sendPasswordResetEmail = async ({ to, recipientName, resetUrl }: PasswordResetEmailParams): Promise<void> => {
+    const html = renderTemplate(resetPasswordEmailTemplate, {
+      recipientName,
+      resetUrl,
+      currentYear: new Date().getFullYear().toString(),
+    });
+    await this.send({ to, subject: 'Reset your TTM password', html });
   };
 }

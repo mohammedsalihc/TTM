@@ -13,6 +13,18 @@ export interface Profile {
   businessName?: string;
   designation?: string;
   photoUrl?: string;
+  phone?: string;
   canManageProjects?: boolean;
   canManageEmployees?: boolean;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  photoUrl?: string;
+  phone?: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }

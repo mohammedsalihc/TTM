@@ -31,6 +31,12 @@ const authSchema = new Schema({
     enum: Object.values(UserRole),
     required: true,
   },
+  resetTokenHash: {
+    type: String,
+  },
+  resetTokenExpiresAt: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

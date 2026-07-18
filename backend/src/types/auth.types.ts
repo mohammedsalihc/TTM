@@ -16,5 +16,10 @@ export interface IAuth {
   email: string;
   passwordHash: string;
   role: UserRole;
+  // Set by POST /api/auth/forgot-password, consumed (and cleared) by
+  // POST /api/auth/reset-password — resetTokenHash is a sha256 of the raw
+  // token emailed to the user, never the raw token itself.
+  resetTokenHash?: string;
+  resetTokenExpiresAt?: Date;
   createdAt?: Date;
 }

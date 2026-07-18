@@ -52,6 +52,14 @@ export const error_message: Record<string, IErrorCode> = {
     message: 'Profile not found',
     code: `${error_code.profile}_404`,
   },
+  invalid_current_password: {
+    message: 'Current password is incorrect',
+    code: `${error_code.profile}_400`,
+  },
+  invalid_reset_token: {
+    message: 'This reset link is invalid or has expired',
+    code: `${error_code.auth}_400`,
+  },
   project_not_found: {
     message: 'Project not found',
     code: `${error_code.project}_404`,

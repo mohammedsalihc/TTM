@@ -15,6 +15,7 @@ export interface IUser {
   role: UserRole;
   designation?: string;
   photoUrl?: string;
+  phone?: string;
   // Manager-only permissions, granted by an Admin after creation — a new
   // manager always starts with both false. Meaningless for Admin/Employee.
   canManageProjects?: boolean;
