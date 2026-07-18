@@ -9,3 +9,5 @@ export * from './profile';
 export * from './pagination';
 export * from './task';
 export * from './comment';
+export * from './notification';
+export * from './activityLog';

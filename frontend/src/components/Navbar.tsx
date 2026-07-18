@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
+import NotificationsBell from './NotificationsBell';
 import { LogoutIcon } from './icons';
 import { useAuth } from '../context/AuthContext';
 import { colorFromString } from '../utils/avatarColor';
@@ -44,6 +45,7 @@ function Navbar({ onMenuClick }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
+        <NotificationsBell />
         {displayName && (
           <>
             <Avatar name={displayName} color={colorFromString(displayName)} size={32} imageUrl={profile?.photoUrl} />
