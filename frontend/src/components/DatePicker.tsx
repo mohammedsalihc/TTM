@@ -8,6 +8,10 @@ interface DatePickerProps {
   value: string; // ISO yyyy-mm-dd, or '' for no selection
   onChange: (value: string) => void;
   placeholder?: string;
+  // Greys out and blocks selecting any day before today, and stops "previous
+  // month" navigation once the visible month is the current one — used
+  // anywhere a past date wouldn't make sense (project/task due dates).
+  disablePast?: boolean;
 }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -51,7 +55,7 @@ const formatDisplay = (iso: string): string => {
 // absolute` inside the form. This form lives inside Modal's scrollable
 // content area, and an absolutely-positioned popover there gets clipped or
 // spills outside the card instead of floating cleanly above everything.
-function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePickerProps) {
+function DatePicker({ id, value, onChange, placeholder = 'Select date', disablePast = false }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selected = parseIso(value);
   const [viewDate, setViewDate] = useState(() => selected ?? new Date());
@@ -91,6 +95,7 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
   };
 
   const handleSelectDay = (day: number) => {
+    if (disablePast && isPastDay(day)) return;
     onChange(toIso(new Date(viewDate.getFullYear(), viewDate.getMonth(), day)));
     setIsOpen(false);
   };
@@ -103,10 +108,17 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const isToday = (day: number) =>
     today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
   const isSelected = (day: number) =>
     !!selected && selected.getFullYear() === year && selected.getMonth() === month && selected.getDate() === day;
+  const isPastDay = (day: number) => new Date(year, month, day) < todayStart;
+  // Once the visible month is the current month, there's nothing earlier
+  // that isn't fully in the past — stop navigation there instead of letting
+  // the user browse into a month where every day is disabled.
+  const isPrevMonthDisabled =
+    disablePast && (year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth()));
 
   return (
     <>
@@ -134,8 +146,9 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
               <button
                 type="button"
                 onClick={() => goToMonth(-1)}
+                disabled={isPrevMonthDisabled}
                 aria-label="Previous month"
-                className="w-7 h-7 flex items-center justify-center rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors text-xs"
+                className="w-7 h-7 flex items-center justify-center rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors text-xs disabled:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
               >
                 &#9664;
               </button>
@@ -164,23 +177,29 @@ function DatePicker({ id, value, onChange, placeholder = 'Select date' }: DatePi
               {leadingBlanks.map((_, i) => (
                 <div key={`blank-${i}`} />
               ))}
-              {days.map((day) => (
-                <div key={day} className="flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectDay(day)}
-                    className={`w-9 h-9 flex items-center justify-center rounded-full text-sm transition-colors ${
-                      isSelected(day)
-                        ? 'bg-indigo-600 text-white font-semibold'
-                        : isToday(day)
-                        ? 'text-indigo-600 font-semibold hover:bg-indigo-50'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {day}
-                  </button>
-                </div>
-              ))}
+              {days.map((day) => {
+                const disabled = disablePast && isPastDay(day);
+                return (
+                  <div key={day} className="flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectDay(day)}
+                      disabled={disabled}
+                      className={`w-9 h-9 flex items-center justify-center rounded-full text-sm transition-colors ${
+                        disabled
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : isSelected(day)
+                          ? 'bg-indigo-600 text-white font-semibold'
+                          : isToday(day)
+                          ? 'text-indigo-600 font-semibold hover:bg-indigo-50'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             {value && (

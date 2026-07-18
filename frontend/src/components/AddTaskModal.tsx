@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import Modal from './Modal';
 import Spinner from './Spinner';
-import DatePicker from './DatePicker';
 import MultiSelectDropdown, { MultiSelectOption } from './MultiSelectDropdown';
 import SingleSelectDropdown, { SelectOption } from './SingleSelectDropdown';
 import { createTaskRequest } from '../services/taskService';
@@ -27,7 +26,6 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
-  const [dueDate, setDueDate] = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
   const [labelsInput, setLabelsInput] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
@@ -39,7 +37,6 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
       setTitle('');
       setDescription('');
       setPriority('medium');
-      setDueDate('');
       setEstimatedHours('');
       setLabelsInput('');
       setAssigneeIds([]);
@@ -55,6 +52,14 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
       setError('Task title is required.');
       return;
     }
+    if (assigneeIds.length === 0) {
+      setError('At least one assignee is required.');
+      return;
+    }
+    if (!estimatedHours) {
+      setError('Estimated hours is required.');
+      return;
+    }
 
     setError('');
     setIsSubmitting(true);
@@ -64,8 +69,7 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
-        dueDate: dueDate || undefined,
-        estimatedHours: estimatedHours ? Number(estimatedHours) : undefined,
+        estimatedHours: Number(estimatedHours),
         labels: labelsInput
           .split(',')
           .map((label) => label.trim())
@@ -124,17 +128,8 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
             />
           </div>
           <div>
-            <label htmlFor="task-due" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Due date
-            </label>
-            <DatePicker id="task-due" value={dueDate} onChange={setDueDate} placeholder="Due date" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
             <label htmlFor="task-hours" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Estimated hours
+              Estimated hours <span className="text-red-500">*</span>
             </label>
             <input
               id="task-hours"
@@ -147,24 +142,25 @@ function AddTaskModal({ isOpen, onClose, onCreated, projectId, employeeOptions }
               placeholder="4"
             />
           </div>
-          <div>
-            <label htmlFor="task-labels" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Labels
-            </label>
-            <input
-              id="task-labels"
-              type="text"
-              value={labelsInput}
-              onChange={(e) => setLabelsInput(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-              placeholder="frontend, urgent"
-            />
-          </div>
+        </div>
+
+        <div>
+          <label htmlFor="task-labels" className="block text-sm font-medium text-gray-700 mb-1.5">
+            Labels
+          </label>
+          <input
+            id="task-labels"
+            type="text"
+            value={labelsInput}
+            onChange={(e) => setLabelsInput(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+            placeholder="frontend, urgent"
+          />
         </div>
 
         <div>
           <label htmlFor="task-assignees" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Assignees
+            Assignees <span className="text-red-500">*</span>
           </label>
           <MultiSelectDropdown
             id="task-assignees"

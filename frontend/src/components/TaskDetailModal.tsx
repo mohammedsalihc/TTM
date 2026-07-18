@@ -204,7 +204,7 @@ function TaskDetailModal({
               <label htmlFor="task-detail-due" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Due date
               </label>
-              <DatePicker id="task-detail-due" value={dueDate} onChange={setDueDate} placeholder="Due date" />
+              <DatePicker id="task-detail-due" value={dueDate} onChange={setDueDate} placeholder="Due date" disablePast />
             </div>
             <div>
               <label htmlFor="task-detail-hours" className="block text-sm font-medium text-gray-700 mb-1.5">

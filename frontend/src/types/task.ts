@@ -25,10 +25,9 @@ export interface CreateTaskPayload {
   projectId: string;
   title: string;
   description?: string;
-  assignedTo?: string[];
+  assignedTo: string[];
   priority?: TaskPriority;
-  dueDate?: string;
-  estimatedHours?: number;
+  estimatedHours: number;
   labels?: string[];
 }
 

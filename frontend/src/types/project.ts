@@ -1,9 +1,3 @@
-// Real lifecycle status from the backend — not the old mock's health
-// indicator strings ('On track'/'At risk'/'Overdue'), which still live
-// locally in data/projects.ts for Dashboard.tsx's mock "Project Progress"
-// section until a real stats endpoint exists.
-export type ProjectStatus = 'active' | 'on-hold' | 'completed' | 'cancelled';
-
 // A user reference embedded directly in a Project response — the backend
 // populates ownerId/memberIds (Mongoose .populate()) before responding, so
 // the frontend never has to resolve raw ids against a separate
@@ -27,7 +21,6 @@ export interface Project {
   dueDate?: string;
   owner?: ProjectPersonRef;
   members: ProjectPersonRef[];
-  status: ProjectStatus;
   createdBy: string;
   createdAt: string;
 }
@@ -48,5 +41,4 @@ export interface UpdateProjectPayload {
   dueDate?: string;
   ownerId?: string;
   memberIds?: string[];
-  status?: ProjectStatus;
 }

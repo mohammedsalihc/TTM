@@ -1,6 +1,5 @@
 import Avatar from './Avatar';
 import RowActions from './RowActions';
-import { statusStyles } from './projectStatusStyles';
 import { Project } from '../types';
 import { colorFromString } from '../utils/avatarColor';
 
@@ -20,7 +19,6 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { 
 // Owner/members come pre-populated (name+photo) straight from the backend
 // (Mongoose .populate()) — no separate id→name lookup needed on this card.
 function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
-  const { badge, label } = statusStyles[project.status];
   const maxVisibleAvatars = 4;
   const visibleMembers = project.members.slice(0, maxVisibleAvatars);
   const extraCount = project.members.length - visibleMembers.length;
@@ -38,10 +36,7 @@ function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
       tabIndex={0}
       className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-200 cursor-pointer p-5 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
     >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-semibold text-gray-900 leading-snug">{project.name}</h3>
-        <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${badge}`}>{label}</span>
-      </div>
+      <h3 className="text-base font-semibold text-gray-900 leading-snug">{project.name}</h3>
 
       <p className="text-sm text-gray-500 line-clamp-2">{project.description || 'No description yet.'}</p>
 

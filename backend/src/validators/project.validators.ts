@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema } from './pagination.validators';
-
-const PROJECT_STATUSES = ['active', 'on-hold', 'completed', 'cancelled'] as const;
+import { isNotPastDate, PAST_DATE_MESSAGE } from './dateRules';
 
 // { error: '...' } covers the field being entirely absent from the body;
 // without it, a missing key fails Zod's base type check first and never
@@ -9,8 +8,8 @@ const PROJECT_STATUSES = ['active', 'on-hold', 'completed', 'cancelled'] as cons
 export const createProjectSchema = z.object({
   name: z.string({ error: 'Project name is required' }).trim().min(1, 'Project name is required'),
   description: z.string().trim().optional(),
-  startDate: z.coerce.date({ error: 'Invalid start date' }).optional(),
-  dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
+  startDate: z.coerce.date({ error: 'Invalid start date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
+  dueDate: z.coerce.date({ error: 'Invalid due date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
   ownerId: z.string({ error: 'Project owner is required' }).trim().min(1, 'Project owner is required'),
   // A project must have at least one member (an employee) — the frontend's
   // Add Project form enforces this too, but the API shouldn't rely on that.
@@ -22,11 +21,10 @@ export const createProjectSchema = z.object({
 export const updateProjectSchema = z.object({
   name: z.string().trim().min(1, 'Project name is required').optional(),
   description: z.string().trim().optional(),
-  startDate: z.coerce.date({ error: 'Invalid start date' }).optional(),
-  dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
+  startDate: z.coerce.date({ error: 'Invalid start date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
+  dueDate: z.coerce.date({ error: 'Invalid due date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
   ownerId: z.string().trim().min(1).optional(),
   memberIds: z.array(z.string()).optional(),
-  status: z.enum(PROJECT_STATUSES, { error: 'Invalid project status' }).optional(),
 });
 
 // Matches by name or description (see ListService.Project) — free text, so

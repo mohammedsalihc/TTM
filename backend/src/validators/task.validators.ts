@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema } from './pagination.validators';
+import { isNotPastDate, PAST_DATE_MESSAGE } from './dateRules';
 import { TaskPriority, TaskStatus } from '../types';
 
 // { error: '...' } covers the field being entirely absent from the body;
@@ -9,11 +10,18 @@ export const createTaskSchema = z.object({
   projectId: z.string({ error: 'Project is required' }).trim().min(1, 'Project is required'),
   title: z.string({ error: 'Task title is required' }).trim().min(1, 'Task title is required'),
   description: z.string().trim().optional(),
-  assignedTo: z.array(z.string()).optional(),
+  // A task must be assigned to at least one employee up front — the
+  // frontend's Add Task form enforces this too, but the API shouldn't rely
+  // on that alone.
+  assignedTo: z
+    .array(z.string(), { error: 'At least one assignee is required' })
+    .min(1, 'At least one assignee is required'),
   priority: z.enum(TaskPriority, { error: 'Invalid task priority' }).optional(),
   status: z.enum(TaskStatus, { error: 'Invalid task status' }).optional(),
-  estimatedHours: z.coerce.number().positive('Estimated hours must be greater than 0').optional(),
-  dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
+  estimatedHours: z
+    .coerce.number({ error: 'Estimated hours is required' })
+    .positive('Estimated hours must be greater than 0'),
+  dueDate: z.coerce.date({ error: 'Invalid due date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
   labels: z.array(z.string().trim()).optional(),
 });
 
@@ -37,7 +45,7 @@ export const updateTaskSchema = z.object({
   priority: z.enum(TaskPriority, { error: 'Invalid task priority' }).optional(),
   status: z.enum(TaskStatus, { error: 'Invalid task status' }).optional(),
   estimatedHours: z.coerce.number().positive('Estimated hours must be greater than 0').optional(),
-  dueDate: z.coerce.date({ error: 'Invalid due date' }).optional(),
+  dueDate: z.coerce.date({ error: 'Invalid due date' }).refine(isNotPastDate, PAST_DATE_MESSAGE).optional(),
   labels: z.array(z.string().trim()).optional(),
 });
 

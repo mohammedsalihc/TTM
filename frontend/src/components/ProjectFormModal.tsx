@@ -3,29 +3,22 @@ import Modal from './Modal';
 import Spinner from './Spinner';
 import DatePicker from './DatePicker';
 import MultiSelectDropdown from './MultiSelectDropdown';
-import SingleSelectDropdown, { SelectOption } from './SingleSelectDropdown';
+import SingleSelectDropdown from './SingleSelectDropdown';
 import { createProjectRequest, updateProjectRequest } from '../services/projectService';
 import { usePeopleDirectory } from '../hooks/usePeopleDirectory';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
-import { Project, ProjectStatus } from '../types';
+import { Project } from '../types';
 
 interface ProjectFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
   // Presence of `project` switches this into edit mode: fields pre-fill
-  // from it, a Status field appears, and submit calls update instead of
-  // create. Same dual-purpose shape as ProfileModal (view/edit in one
-  // component) rather than a separate near-duplicate EditProjectModal.
+  // from it and submit calls update instead of create. Same dual-purpose
+  // shape as ProfileModal (view/edit in one component) rather than a
+  // separate near-duplicate EditProjectModal.
   project?: Project;
 }
-
-const STATUS_OPTIONS: SelectOption[] = [
-  { id: 'active', name: 'Active' },
-  { id: 'on-hold', name: 'On Hold' },
-  { id: 'completed', name: 'Completed' },
-  { id: 'cancelled', name: 'Cancelled' },
-];
 
 function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModalProps) {
   const isEditMode = !!project;
@@ -39,7 +32,6 @@ function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModa
   const [dueDate, setDueDate] = useState('');
   const [managerId, setManagerId] = useState('');
   const [employeeIds, setEmployeeIds] = useState<string[]>([]);
-  const [status, setStatus] = useState<ProjectStatus>('active');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,7 +43,6 @@ function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModa
       setDueDate(project?.dueDate ? project.dueDate.slice(0, 10) : '');
       setManagerId(project?.owner?.id ?? '');
       setEmployeeIds(project?.members.map((member) => member.id) ?? []);
-      setStatus(project?.status ?? 'active');
       setError('');
       setIsSubmitting(false);
     }
@@ -78,7 +69,6 @@ function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModa
           dueDate: dueDate || undefined,
           ownerId: managerId,
           memberIds: employeeIds,
-          status,
         });
       } else {
         await createProjectRequest({
@@ -134,13 +124,13 @@ function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModa
             <label htmlFor="project-start" className="block text-sm font-medium text-gray-700 mb-1.5">
               Start date
             </label>
-            <DatePicker id="project-start" value={startDate} onChange={setStartDate} placeholder="Start date" />
+            <DatePicker id="project-start" value={startDate} onChange={setStartDate} placeholder="Start date" disablePast />
           </div>
           <div>
             <label htmlFor="project-due" className="block text-sm font-medium text-gray-700 mb-1.5">
               Due date
             </label>
-            <DatePicker id="project-due" value={dueDate} onChange={setDueDate} placeholder="Due date" />
+            <DatePicker id="project-due" value={dueDate} onChange={setDueDate} placeholder="Due date" disablePast />
           </div>
         </div>
 
@@ -174,20 +164,6 @@ function ProjectFormModal({ isOpen, onClose, onSaved, project }: ProjectFormModa
             emptyMessage="No employees yet."
           />
         </div>
-
-        {isEditMode && (
-          <div>
-            <label htmlFor="project-status" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Status
-            </label>
-            <SingleSelectDropdown
-              id="project-status"
-              options={STATUS_OPTIONS}
-              value={status}
-              onChange={(value) => setStatus(value as ProjectStatus)}
-            />
-          </div>
-        )}
 
         {error && (
           <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">

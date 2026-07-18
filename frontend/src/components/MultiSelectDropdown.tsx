@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDownIcon } from './icons';
 import { computePopoverPosition, estimateListPopoverHeight, PopoverCoords } from '../utils/popoverPosition';
@@ -15,6 +15,11 @@ interface MultiSelectDropdownProps {
   onChange: (ids: string[]) => void;
   placeholder?: string;
   emptyMessage?: string;
+  // Swaps the default full-width "selected names" bar for a custom trigger
+  // (e.g. a small circular "+" icon button) — used where this dropdown is
+  // an inline action rather than a form field. The popover/portal/outside-
+  // click behavior underneath is unchanged either way.
+  renderTrigger?: (props: { onClick: () => void; isOpen: boolean }) => ReactNode;
 }
 
 const MIN_POPOVER_WIDTH = 280;
@@ -30,10 +35,11 @@ function MultiSelectDropdown({
   onChange,
   placeholder = 'Select',
   emptyMessage = 'No options yet',
+  renderTrigger,
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0, width: 0 });
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,18 +84,23 @@ function MultiSelectDropdown({
 
   return (
     <>
-      <button
-        ref={buttonRef}
-        type="button"
-        id={id}
-        onClick={toggleOpen}
-        className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-      >
-        <span className={`truncate ${selectedNames.length ? 'text-gray-900' : 'text-gray-400'}`}>{displayText}</span>
-        <span className="text-gray-400 shrink-0">
-          <ChevronDownIcon size={16} />
-        </span>
-      </button>
+      <div ref={buttonRef} className={renderTrigger ? 'inline-block' : 'w-full'}>
+        {renderTrigger ? (
+          renderTrigger({ onClick: toggleOpen, isOpen })
+        ) : (
+          <button
+            type="button"
+            id={id}
+            onClick={toggleOpen}
+            className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          >
+            <span className={`truncate ${selectedNames.length ? 'text-gray-900' : 'text-gray-400'}`}>{displayText}</span>
+            <span className="text-gray-400 shrink-0">
+              <ChevronDownIcon size={16} />
+            </span>
+          </button>
+        )}
+      </div>
 
       {isOpen &&
         createPortal(

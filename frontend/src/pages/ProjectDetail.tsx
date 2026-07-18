@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import Avatar from '../components/Avatar';
@@ -8,10 +8,11 @@ import TaskCard from '../components/TaskCard';
 import AddTaskModal from '../components/AddTaskModal';
 import TaskDetailModal from '../components/TaskDetailModal';
 import ProjectFormModal from '../components/ProjectFormModal';
-import { ChevronLeftIcon } from '../components/icons';
-import { statusStyles } from '../components/projectStatusStyles';
-import { getProjectRequest, deleteProjectRequest } from '../services/projectService';
+import MultiSelectDropdown from '../components/MultiSelectDropdown';
+import { ChevronLeftIcon, SearchIcon, SettingsIcon, PlusIcon } from '../components/icons';
+import { getProjectRequest, updateProjectRequest, deleteProjectRequest } from '../services/projectService';
 import { listTasksRequest, updateTaskStatusRequest } from '../services/taskService';
+import { usePeopleDirectory } from '../hooks/usePeopleDirectory';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { colorFromString } from '../utils/avatarColor';
 import { useAuth } from '../context/AuthContext';
@@ -37,6 +38,9 @@ function ProjectDetail() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const fetchProject = useCallback(async () => {
     if (!id) return;
@@ -58,6 +62,16 @@ function ProjectDetail() {
       .finally(() => setIsLoading(false));
   }, [fetchProject, fetchTasks]);
 
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settingsRef.current?.contains(e.target as Node)) return;
+      setIsSettingsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSettingsOpen]);
+
   // Same ownership rule the backend enforces: Admin always, a Manager only
   // if they own this project and still hold the permission.
   const canManageProject =
@@ -66,7 +80,22 @@ function ProjectDetail() {
     (profile.role === UserRole.Admin ||
       (profile.role === UserRole.Manager && profile.canManageProjects === true && project.owner?.id === profile.id));
 
+  // Business-wide employee directory (not just this project's current
+  // members) — needed for the add/remove members picker. Only fetched once
+  // the viewer can actually manage the project.
+  const { employees: allEmployees } = usePeopleDirectory(canManageProject);
+
   const employeeOptions = (project?.members ?? []).filter((member) => member.role === UserRole.Employee);
+
+  const handleMembersChange = async (memberIds: string[]) => {
+    if (!project) return;
+    try {
+      const updated = await updateProjectRequest(project.id, { memberIds });
+      setProject(updated);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to update project members.'));
+    }
+  };
 
   const handleDeleteProject = async () => {
     if (!project) return;
@@ -91,6 +120,10 @@ function ProjectDetail() {
   const canChangeTaskStatus = (task: Task) =>
     canManageProject || (profile?.role === UserRole.Employee && task.assignedTo.some((a) => a.id === profile.id));
 
+  const filteredTasks = tasks.filter(
+    (task) => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -112,8 +145,6 @@ function ProjectDetail() {
     );
   }
 
-  const { badge, label } = statusStyles[project.status];
-
   return (
     <DashboardLayout>
       <button
@@ -129,87 +160,121 @@ function ProjectDetail() {
         <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3.5 mb-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-lg font-semibold text-gray-900 truncate">{project.name}</h2>
-              <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${badge}`}>{label}</span>
-            </div>
-            {project.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{project.description}</p>}
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
-              <span className="text-gray-500">
-                Manager: <span className="font-medium text-gray-800">{project.owner?.name ?? '—'}</span>
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-500">Members:</span>
-                {project.members.length > 0 ? (
-                  <div className="flex items-center -space-x-1.5">
-                    {project.members.map((member) => (
-                      <Avatar
-                        key={member.id}
-                        name={member.name}
-                        color={colorFromString(member.name)}
-                        imageUrl={member.photoUrl}
-                        size={20}
-                        className="ring-2 ring-white"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-gray-400">None</span>
-                )}
-              </div>
-
-              {(project.startDate || project.dueDate) && (
-                <span className="text-gray-400">
-                  {project.startDate ? formatDate(project.startDate) : '—'} &rarr;{' '}
-                  {project.dueDate ? formatDate(project.dueDate) : '—'}
-                </span>
-              )}
-            </div>
-          </div>
-          {canManageProject && (
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(true)}
-                className="bg-white text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteProject}
-                className="bg-white text-red-600 border border-red-200 rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-red-50 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          )}
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-gray-900 truncate">{project.name}</h2>
+          {project.dueDate && <p className="text-xs text-gray-500 mt-1">Due {formatDate(project.dueDate)}</p>}
         </div>
+        {canManageProject && (
+          <div className="relative shrink-0" ref={settingsRef}>
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((prev) => !prev)}
+              aria-label="Project settings"
+              title="Project settings"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+            >
+              <SettingsIcon size={16} />
+            </button>
+            {isSettingsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl border border-gray-100 shadow-xl py-1.5 z-20">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Edit project
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    handleDeleteProject();
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Delete project
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Tasks</h3>
+      <div className="flex items-center gap-2 mb-5">
+        {project.members.length > 0 && (
+          <div className="flex items-center -space-x-2">
+            {project.members.slice(0, 6).map((member) => (
+              <Avatar
+                key={member.id}
+                name={member.name}
+                color={colorFromString(member.name)}
+                imageUrl={member.photoUrl}
+                size={28}
+                className="ring-2 ring-white"
+              />
+            ))}
+            {project.members.length > 6 && (
+              <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold flex items-center justify-center ring-2 ring-white">
+                +{project.members.length - 6}
+              </div>
+            )}
+          </div>
+        )}
+        {canManageProject && (
+          <MultiSelectDropdown
+            options={allEmployees.map((employee) => ({ id: employee.id, name: employee.name }))}
+            selectedIds={employeeOptions.map((member) => member.id)}
+            onChange={handleMembersChange}
+            emptyMessage="No employees yet."
+            renderTrigger={({ onClick }) => (
+              <button
+                type="button"
+                onClick={onClick}
+                aria-label="Add or remove members"
+                title="Add or remove members"
+                className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-400 flex items-center justify-center hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+              >
+                <PlusIcon size={14} />
+              </button>
+            )}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400" aria-hidden="true">
+            <SearchIcon size={14} />
+          </span>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search tasks..."
+            aria-label="Search tasks"
+            className="w-52 rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          />
+        </div>
         {canManageProject && (
           <button
             type="button"
             onClick={() => setIsAddTaskModalOpen(true)}
             className="bg-indigo-600 text-white text-sm font-semibold rounded-lg px-4 py-2.5 shadow-sm hover:bg-indigo-500 transition-colors"
           >
-            + Add Task
+            + New Task
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {BOARD_COLUMNS.map((column) => {
-          const columnTasks = tasks.filter((task) => task.status === column.status);
+          const columnTasks = filteredTasks.filter((task) => task.status === column.status);
           return (
-            <TaskColumn key={column.status} title={column.title} count={columnTasks.length}>
+            <TaskColumn key={column.status} status={column.status} title={column.title} count={columnTasks.length}>
               {columnTasks.map((task) => (
                 <TaskCard
                   key={task.id}

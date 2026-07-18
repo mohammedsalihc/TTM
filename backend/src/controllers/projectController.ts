@@ -50,7 +50,6 @@ const toProjectResponse = (project: IProject) => {
     dueDate: project.dueDate,
     owner: owner ? { id: owner._id, name: owner.name, photoUrl: owner.photoUrl } : undefined,
     members: members.map((member) => ({ id: member._id, name: member.name, photoUrl: member.photoUrl, role: member.role })),
-    status: project.status,
     createdBy: project.createdBy,
     createdAt: project.createdAt,
   };
@@ -177,17 +176,6 @@ class ProjectController extends ControllerHandler {
     if (!project) {
       this.error(res, 404, error_message.project_not_found);
       return;
-    }
-
-    // Only status changes are logged — other field edits (description,
-    // dates, members) aren't part of the activity feed's scope.
-    if (rest.status) {
-      await this.activity_log_service.log({
-        businessId,
-        projectId: project._id!,
-        actorId: req.userId!,
-        action: `changed project "${project.name}" status to ${rest.status}`,
-      });
     }
 
     await populateOwnerAndMembers(project);

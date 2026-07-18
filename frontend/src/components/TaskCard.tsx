@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Avatar from './Avatar';
 import SingleSelectDropdown, { SelectOption } from './SingleSelectDropdown';
 import { taskPriorityStyles } from './taskStyles';
@@ -19,36 +20,42 @@ const STATUS_OPTIONS: SelectOption[] = [
   { id: 'completed', name: 'Completed' },
 ];
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-// Deliberately no description preview here — a Jira-card-style summary
-// (title, tags, assignee/due date, status), not a mini detail view. Full
-// description lives in the task detail view.
 function TaskCard({ task, onClick, canChangeStatus, onStatusChange }: TaskCardProps) {
   const priority = taskPriorityStyles[task.priority];
+  // Fades/slides the card in on mount — since a status change re-renders the
+  // task into a different column (a fresh DOM node, not a repositioned one),
+  // this is what makes that move read as a smooth transition instead of a
+  // hard cut, matching Modal's own mount-transition approach.
+  const [isSettled, setIsSettled] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setIsSettled(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return (
     <div
       onClick={() => onClick?.(task)}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`bg-white rounded-lg border border-gray-100 shadow-sm p-2.5 flex flex-col gap-1.5 ${
-        onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-      }`}
+      className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex flex-col gap-2 transition-all duration-300 ease-out ${
+        isSettled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      } ${onClick ? 'cursor-pointer hover:shadow-md hover:border-gray-200' : ''}`}
     >
-      <div className="flex items-start justify-between gap-1.5">
-        <h4 className="text-xs font-semibold text-gray-900 leading-snug line-clamp-2">{task.title}</h4>
-        <span className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${priority.badge}`}>
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{task.title}</h4>
+        <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${priority.badge}`}>
           {priority.label}
         </span>
       </div>
+
+      {task.description && <p className="text-xs text-gray-400 line-clamp-2">{task.description}</p>}
 
       {task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {task.labels.map((label) => (
             <span
               key={label}
-              className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100"
+              className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100"
             >
               {label}
             </span>
@@ -56,7 +63,7 @@ function TaskCard({ task, onClick, canChangeStatus, onStatusChange }: TaskCardPr
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-0.5">
         <div className="flex items-center -space-x-1.5">
           {task.assignedTo.map((person) => (
             <Avatar
@@ -64,12 +71,12 @@ function TaskCard({ task, onClick, canChangeStatus, onStatusChange }: TaskCardPr
               name={person.name}
               color={colorFromString(person.name)}
               imageUrl={person.photoUrl}
-              size={18}
+              size={20}
               className="ring-2 ring-white"
             />
           ))}
         </div>
-        {task.dueDate && <span className="text-[9px] text-gray-400">Due {formatDate(task.dueDate)}</span>}
+        {task.estimatedHours != null && <span className="text-[10px] text-gray-400">{task.estimatedHours}h</span>}
       </div>
 
       {canChangeStatus && (

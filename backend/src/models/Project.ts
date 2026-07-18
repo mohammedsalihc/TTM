@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IProject, ProjectStatus } from '../types';
+import { IProject } from '../types';
 
 const projectSchema = new Schema({
   businessId: {
@@ -35,11 +35,6 @@ const projectSchema = new Schema({
       ref: 'User',
     },
   ],
-  status: {
-    type: String,
-    enum: Object.values(ProjectStatus),
-    default: ProjectStatus.Active,
-  },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',

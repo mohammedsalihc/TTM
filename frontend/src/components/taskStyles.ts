@@ -12,3 +12,11 @@ export const taskPriorityStyles: Record<TaskPriority, { badge: string; label: st
   high: { badge: 'bg-orange-50 text-orange-600', label: 'High' },
   critical: { badge: 'bg-red-50 text-red-600', label: 'Critical' },
 };
+
+// Solid dot color for column headers — same 3 statuses as taskStatusStyles,
+// just a filled swatch instead of a text/bg pill.
+export const taskStatusDotStyles: Record<TaskStatus, string> = {
+  todo: 'bg-gray-400',
+  'in-progress': 'bg-amber-500',
+  completed: 'bg-emerald-500',
+};
