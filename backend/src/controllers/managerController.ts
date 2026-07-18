@@ -10,9 +10,8 @@ import { error_message } from '../constants/errorMessages';
 import { SALT_ROUNDS } from '../constants/security';
 import { UserRole, IUser } from '../types';
 import { createManagerSchema, listManagersQuerySchema, updateManagerSchema } from '../validators/manager.validators';
-import { isDuplicateKeyError } from '../utils/errors';
 import { buildPaginationMeta } from '../utils/pagination';
-import { asyncHandler } from '../utils/asyncHandler';
+import { asyncHandler, asyncHandlerWithDuplicateKeyCatch } from '../utils/asyncHandler';
 
 const toManagerResponse = (user: IUser) => ({
   id: user._id,
@@ -32,67 +31,55 @@ class ManagerController extends ControllerHandler {
   private update_service = new UpdateService();
   private mail_service = new MailService();
 
-  create = async (req: Request, res: Response) => {
-    try {
-      const parsed = this.validate(createManagerSchema, req.body, res);
-      if (!parsed) return;
+  create = asyncHandlerWithDuplicateKeyCatch(async (req: Request, res: Response) => {
+    const parsed = this.validate(createManagerSchema, req.body, res);
+    if (!parsed) return;
 
-      const { name, email, password, photoUrl, sendEmailInvite } = parsed;
-      const businessId = req.businessId!;
+    const { name, email, password, photoUrl, sendEmailInvite } = parsed;
+    const businessId = req.businessId!;
 
-      const existingAuth = await this.detail_service.Auth({ email });
-      if (existingAuth) {
-        this.error(res, 409, error_message.email_already_exists);
-        return;
-      }
-
-      const user = await this.create_service.User({
-        businessId,
-        name,
-        email,
-        role: UserRole.Manager,
-        photoUrl,
-      });
-
-      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-      await this.create_service.Auth({
-        businessId,
-        user: user._id!,
-        email,
-        passwordHash,
-        role: UserRole.Manager,
-      });
-
-      if (sendEmailInvite) {
-        // Best-effort: the manager record is already created either way —
-        // a flaky email provider shouldn't fail the whole create request.
-        try {
-          const business = await this.detail_service.Business({ _id: businessId });
-          await this.mail_service.sendWelcomeEmail({
-            to: email,
-            businessName: business?.name,
-            recipientName: name,
-            designation: 'a Manager',
-            password,
-          });
-        } catch (mailErr) {
-          console.error('Failed to send welcome email invite:', mailErr);
-        }
-      }
-
-      this.jsonResponse(res, toManagerResponse(user));
-    } catch (err) {
-      // Duplicate-key race: the pre-check above can't fully rule out two
-      // concurrent creates with the same email; the unique index on
-      // Auth.email is the real guarantee.
-      if (isDuplicateKeyError(err)) {
-        this.error(res, 409, error_message.email_already_exists);
-        return;
-      }
-      console.error(err);
-      this.error(res, 500, null, err);
+    const existingAuth = await this.detail_service.Auth({ email });
+    if (existingAuth) {
+      this.error(res, 409, error_message.email_already_exists);
+      return;
     }
-  };
+
+    const user = await this.create_service.User({
+      businessId,
+      name,
+      email,
+      role: UserRole.Manager,
+      photoUrl,
+    });
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    await this.create_service.Auth({
+      businessId,
+      user: user._id!,
+      email,
+      passwordHash,
+      role: UserRole.Manager,
+    });
+
+    if (sendEmailInvite) {
+      // Best-effort: the manager record is already created either way —
+      // a flaky email provider shouldn't fail the whole create request.
+      try {
+        const business = await this.detail_service.Business({ _id: businessId });
+        await this.mail_service.sendWelcomeEmail({
+          to: email,
+          businessName: business?.name,
+          recipientName: name,
+          designation: 'a Manager',
+          password,
+        });
+      } catch (mailErr) {
+        console.error('Failed to send welcome email invite:', mailErr);
+      }
+    }
+
+    this.jsonResponse(res, toManagerResponse(user));
+  }, error_message.email_already_exists);
 
   detail = asyncHandler(async (req: Request, res: Response) => {
     const businessId = req.businessId!;

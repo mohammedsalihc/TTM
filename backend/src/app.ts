@@ -1,4 +1,4 @@
-import "dotenv/config";
-import connectApp from "./configs";
+import 'dotenv/config';
+import connectApp from './configs';
 
-connectApp()
+connectApp();

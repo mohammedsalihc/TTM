@@ -1,13 +1,12 @@
-import { StartServer } from "./server"
-import { connectDB } from "./db"
-import "./cloudinary"
-import "./brevo"
+import { StartServer } from './server';
+import { connectDB } from './db';
+import './cloudinary';
+import './brevo';
 
 const connectApp = () => {
-    connectDB()
-    StartServer()
-}
+  connectDB();
+  StartServer();
+};
 
-
-export default connectApp
+export default connectApp;
 
