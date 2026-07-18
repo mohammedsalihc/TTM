@@ -64,27 +64,6 @@ export const TasksIcon = ({ size = 20 }: IconProps) => (
   </svg>
 );
 
-export const CompletedIcon = ({ size = 20 }: IconProps) => (
-  <svg {...baseProps(size)} aria-hidden="true">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M8.5 12.5l2.5 2.5 4.5-5" />
-  </svg>
-);
-
-export const InProgressIcon = ({ size = 20 }: IconProps) => (
-  <svg {...baseProps(size)} aria-hidden="true">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3.5 2" />
-  </svg>
-);
-
-export const OverdueIcon = ({ size = 20 }: IconProps) => (
-  <svg {...baseProps(size)} aria-hidden="true">
-    <path d="M12 9v4M12 17h.01" />
-    <path d="M10.3 3.9L2.4 18a1.5 1.5 0 001.3 2.2h16.6a1.5 1.5 0 001.3-2.2L13.7 3.9a1.5 1.5 0 00-2.6 0z" />
-  </svg>
-);
-
 // Feather Icons (MIT) — "edit-2"
 export const EditIcon = ({ size = 16 }: IconProps) => (
   <svg {...baseProps(size)} aria-hidden="true">
@@ -92,10 +71,11 @@ export const EditIcon = ({ size = 16 }: IconProps) => (
   </svg>
 );
 
-// Feather Icons (MIT) — "tool" (wrench)
-export const ToolsIcon = ({ size = 20 }: IconProps) => (
+// Feather Icons (MIT) — "bell"
+export const BellIcon = ({ size = 20 }: IconProps) => (
   <svg {...baseProps(size)} aria-hidden="true">
-    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+    <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 01-3.46 0" />
   </svg>
 );
 

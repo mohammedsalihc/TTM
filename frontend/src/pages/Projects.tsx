@@ -5,10 +5,7 @@ import ProjectCard from '../components/ProjectCard';
 import ProjectFormModal from '../components/ProjectFormModal';
 import Spinner from '../components/Spinner';
 import { SearchIcon } from '../components/icons';
-import {
-  deleteProjectRequest,
-  listProjectsRequest,
-} from '../services/projectService';
+import { listProjectsRequest } from '../services/projectService';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { Project, PaginationMeta, UserRole } from '../types';
@@ -101,17 +98,6 @@ function Projects() {
     fetchFirstPage();
   };
 
-  const handleDelete = async (project: Project) => {
-    if (!window.confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
-    try {
-      await deleteProjectRequest(project.id);
-      setProjects((prev) => prev.filter((p) => p.id !== project.id));
-      setPagination((prev) => ({ ...prev, total: Math.max(0, prev.total - 1) }));
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'Unable to delete project.'));
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6 gap-3">
@@ -160,12 +146,7 @@ function Projects() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onView={(p) => navigate(`/projects/${p.id}`)}
-              onDelete={handleDelete}
-            />
+            <ProjectCard key={project.id} project={project} onView={(p) => navigate(`/projects/${p.id}`)} />
           ))}
         </div>
       )}

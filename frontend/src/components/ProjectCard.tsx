@@ -1,24 +1,23 @@
 import Avatar from './Avatar';
-import RowActions from './RowActions';
 import { Project } from '../types';
 import { colorFromString } from '../utils/avatarColor';
 
 interface ProjectCardProps {
   project: Project;
   onView?: (project: Project) => void;
-  onDelete?: (project: Project) => void;
 }
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 // The card itself is the click target (cursor-pointer + hover shadow signal
-// this). Row actions stop propagation so Delete doesn't also trigger onView.
-// No progress bar here — the real backend has no percent field, and
-// computing one would mean a task-count query per card; a completion
-// indicator belongs on the detail page instead, where tasks are loaded.
-// Owner/members come pre-populated (name+photo) straight from the backend
-// (Mongoose .populate()) — no separate id→name lookup needed on this card.
-function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
+// this) — edit/delete live on the project detail page's settings menu, not
+// here, so there's no separate row of action icons to wire up or stop
+// propagation for. No progress bar either — the real backend has no percent
+// field, and computing one would mean a task-count query per card; a
+// completion indicator belongs on the detail page instead, where tasks are
+// loaded. Owner/members come pre-populated (name+photo) straight from the
+// backend (Mongoose .populate()) — no separate id→name lookup needed here.
+function ProjectCard({ project, onView }: ProjectCardProps) {
   const maxVisibleAvatars = 4;
   const visibleMembers = project.members.slice(0, maxVisibleAvatars);
   const extraCount = project.members.length - visibleMembers.length;
@@ -65,12 +64,7 @@ function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">{project.dueDate ? `Due ${formatDate(project.dueDate)}` : 'No due date'}</p>
-        <div onClick={(e) => e.stopPropagation()}>
-          <RowActions onDelete={() => onDelete?.(project)} />
-        </div>
-      </div>
+      <p className="text-xs text-gray-400">{project.dueDate ? `Due ${formatDate(project.dueDate)}` : 'No due date'}</p>
     </div>
   );
 }

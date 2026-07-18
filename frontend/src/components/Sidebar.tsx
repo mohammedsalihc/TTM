@@ -5,8 +5,8 @@ import {
   UsersIcon,
   ManagersIcon,
   ProjectsIcon,
+  BellIcon,
   ProfileIcon,
-  ToolsIcon,
 } from './icons';
 import { NavItem } from '../types';
 
@@ -15,8 +15,8 @@ const navItems: NavItem[] = [
   { label: 'Employees', icon: <UsersIcon />, path: '/employees' },
   { label: 'Managers', icon: <ManagersIcon />, path: '/managers' },
   { label: 'Projects', icon: <ProjectsIcon />, path: '/projects' },
-  { label: 'Profile', icon: <ProfileIcon />, path: '/profile' },
-  { label: 'Settings', icon: <ToolsIcon />, path: '/settings' },
+  { label: 'Notifications', icon: <BellIcon /> },
+  { label: 'Profile & Settings', icon: <ProfileIcon />, path: '/profile' },
 ];
 
 interface SidebarProps {
@@ -52,18 +52,31 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 px-3 py-6 space-y-1">
           {navItems.map((item) => {
             const isActive = item.path === location.pathname;
+            const className = `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-indigo-50 text-indigo-600'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`;
+
+            if (item.path) {
+              return (
+                <Link key={item.label} to={item.path} onClick={onClose} className={className}>
+                  {item.icon}
+                  {item.label}
+                </Link>
+              );
+            }
+
             return (
-              <Link
+              <button
                 key={item.label}
-                to={item.path}
-                onClick={onClose}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                type="button"
+                title="Coming soon"
+                className={`${className} text-gray-400 cursor-not-allowed hover:bg-transparent hover:text-gray-400`}
               >
                 {item.icon}
                 {item.label}
-              </Link>
+              </button>
             );
           })}
         </nav>
