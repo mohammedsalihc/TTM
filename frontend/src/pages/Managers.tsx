@@ -17,7 +17,6 @@ const toTeamMember = (manager: Manager): TeamMember => ({
   email: manager.email,
   photoUrl: manager.photoUrl,
   avatarColor: colorFromString(manager.name || manager.email),
-  projects: [],
   canManageProjects: manager.canManageProjects,
   canManageEmployees: manager.canManageEmployees,
 });

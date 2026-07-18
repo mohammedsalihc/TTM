@@ -18,7 +18,6 @@ const toTeamMember = (employee: Employee): TeamMember => ({
   designation: employee.designation,
   photoUrl: employee.photoUrl,
   avatarColor: colorFromString(employee.name || employee.email),
-  projects: [],
 });
 
 function Employees() {

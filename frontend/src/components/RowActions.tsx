@@ -28,8 +28,6 @@ interface RowActionsProps {
 const actionButtonClass =
   'w-10 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:scale-110 active:scale-95';
 
-// Buttons are visual-only placeholders for now — wired up once a profile
-// page and user CRUD have somewhere real to submit to.
 function RowActions({ onViewProfile, onEdit, onDelete }: RowActionsProps) {
   return (
     <div className="flex items-center gap-2">

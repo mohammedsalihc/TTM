@@ -1,33 +1,41 @@
 import * as XLSX from 'xlsx';
-import { employees } from '../data/employees';
-import { managers } from '../data/managers';
-import { projects } from '../data/projects';
+import { listEmployeesRequest } from '../services/employeeService';
+import { listManagersRequest } from '../services/managerService';
+import { listProjectsRequest } from '../services/projectService';
 
-export function exportFullReport() {
+// 100 is the backend's hard cap on `limit` (paginationQuerySchema) — same
+// constraint usePeopleDirectory works around, so a business with more
+// employees/managers/projects than that would need real pagination here.
+const REPORT_PAGE_SIZE = 100;
+
+export async function exportFullReport() {
+  const [employeesRes, managersRes, projectsRes] = await Promise.all([
+    listEmployeesRequest({ page: 1, limit: REPORT_PAGE_SIZE }),
+    listManagersRequest({ page: 1, limit: REPORT_PAGE_SIZE }),
+    listProjectsRequest({ page: 1, limit: REPORT_PAGE_SIZE }),
+  ]);
+
   const users = [
-    ...employees.map((e) => ({
+    ...employeesRes.data.map((e) => ({
       Name: e.name,
       Email: e.email,
       Role: 'Employee',
       Designation: e.designation ?? '',
-      Projects: e.projects.join(', '),
     })),
-    ...managers.map((m) => ({
+    ...managersRes.data.map((m) => ({
       Name: m.name,
       Email: m.email,
       Role: 'Manager',
       Designation: '',
-      Projects: m.projects.join(', '),
     })),
   ];
 
-  const projectRows = projects.map((p) => ({
+  const projectRows = projectsRes.data.map((p) => ({
     Name: p.name,
-    Manager: p.manager,
-    Status: p.status,
-    'Percent Complete': p.percent,
-    Deadline: p.deadline,
-    Employees: p.employees.join(', '),
+    Manager: p.owner?.name ?? '',
+    Members: p.members.map((member) => member.name).join(', '),
+    'Start Date': p.startDate ?? '',
+    'Due Date': p.dueDate ?? '',
   }));
 
   const workbook = XLSX.utils.book_new();

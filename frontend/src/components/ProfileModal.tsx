@@ -188,36 +188,6 @@ function ProfileModal({
                 <span className="truncate">{displayPerson.email}</span>
               </div>
             </div>
-
-            {/* Static placeholder stats — no real task/project tracking backend yet. */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-              <div>
-                <p className="text-xs text-gray-400">Projects completed</p>
-                <p className="text-sm font-semibold text-gray-800 mt-0.5">8</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Overall performance</p>
-                <p className="text-sm font-semibold text-gray-800 mt-0.5">Good</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-400 mb-1.5">Projects</p>
-              {displayPerson.projects.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {displayPerson.projects.map((project) => (
-                    <span
-                      key={project}
-                      className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100"
-                    >
-                      {project}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 italic">No projects assigned</p>
-              )}
-            </div>
           </div>
 
           <div className="pt-6">

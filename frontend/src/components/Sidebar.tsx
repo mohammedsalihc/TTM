@@ -15,8 +15,8 @@ const navItems: NavItem[] = [
   { label: 'Employees', icon: <UsersIcon />, path: '/employees' },
   { label: 'Managers', icon: <ManagersIcon />, path: '/managers' },
   { label: 'Projects', icon: <ProjectsIcon />, path: '/projects' },
-  { label: 'Profile & Settings', icon: <ProfileIcon />, path: '/profile' },
-  { label: 'Tools', icon: <ToolsIcon />, path: '/settings' },
+  { label: 'Profile', icon: <ProfileIcon />, path: '/profile' },
+  { label: 'Settings', icon: <ToolsIcon />, path: '/settings' },
 ];
 
 interface SidebarProps {
@@ -24,10 +24,6 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-// Every item currently has a path, but the fallback below (a non-navigating
-// button) stays in place for whenever a new item is added before its page
-// exists — matches how each item here got wired up incrementally.
-//
 // Responsive behavior: below `lg`, this renders as an off-canvas drawer
 // (hidden via -translate-x-full, slid in via `isOpen`) with a backdrop;
 // at `lg` and above it's always visible as a static column.
@@ -56,26 +52,18 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 px-3 py-6 space-y-1">
           {navItems.map((item) => {
             const isActive = item.path === location.pathname;
-            const className = `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive
-                ? 'bg-indigo-50 text-indigo-600'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`;
-
-            if (item.path) {
-              return (
-                <Link key={item.label} to={item.path} className={className} onClick={onClose}>
-                  {item.icon}
-                  {item.label}
-                </Link>
-              );
-            }
-
             return (
-              <button key={item.label} type="button" className={className}>
+              <Link
+                key={item.label}
+                to={item.path}
+                onClick={onClose}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
                 {item.icon}
                 {item.label}
-              </button>
+              </Link>
             );
           })}
         </nav>

@@ -123,24 +123,21 @@ function PeopleTable({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-x-auto">
         <table
           className={`w-full text-left border-collapse table-fixed ${
-            showDesignation ? 'min-w-[860px]' : 'min-w-[720px]'
+            showDesignation ? 'min-w-[720px]' : 'min-w-[600px]'
           }`}
         >
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="w-1/5 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <th className="w-1/3 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 {columnLabel}
               </th>
               {showDesignation && (
-                <th className="w-1/6 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                <th className="w-1/4 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                   Designation
                 </th>
               )}
-              <th className="w-1/5 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <th className="w-1/3 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 Email
-              </th>
-              <th className="w-1/4 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                Projects
               </th>
               <th className="w-32 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 Actions
@@ -150,7 +147,7 @@ function PeopleTable({
           <tbody className="divide-y divide-gray-50">
             {isLoading ? (
               <tr>
-                <td colSpan={showDesignation ? 5 : 4} className="px-6 py-10 text-center text-sm text-gray-400">
+                <td colSpan={showDesignation ? 4 : 3} className="px-6 py-10 text-center text-sm text-gray-400">
                   <div className="flex items-center justify-center gap-2">
                     <Spinner size={16} />
                     Loading...
@@ -160,7 +157,7 @@ function PeopleTable({
             ) : people.length === 0 ? (
               <tr>
                 <td
-                  colSpan={showDesignation ? 5 : 4}
+                  colSpan={showDesignation ? 4 : 3}
                   className="px-6 py-10 text-center text-sm text-gray-400 italic"
                 >
                   {search ? `No ${columnLabel.toLowerCase()}s match "${search}"` : `No ${columnLabel.toLowerCase()}s yet`}
@@ -188,22 +185,6 @@ function PeopleTable({
                         <MailIcon />
                       </span>
                       {person.email}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      {person.projects.length > 0 ? (
-                        person.projects.map((project) => (
-                          <span
-                            key={project}
-                            className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100"
-                          >
-                            {project}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">No projects assigned</span>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
